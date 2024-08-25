@@ -37,7 +37,7 @@ const ComputerDetail: React.FC = () => {
       if (location.state && location.state.computerId) {
         console.log("Fetching computer data for computerId:", location.state.computerId);
         try {
-          const response = await fetch(`https://localhost:7283/api/Computers/Obtener/${location.state.computerId}`);
+          const response = await fetch(`https://localhost:7283/api/Cpus/Obtener/${location.state.computerId}`);
          
           if (!response.ok) {
             throw new Error(`Failed to fetch computer data: ${response.statusText}`);
@@ -73,7 +73,7 @@ const ComputerDetail: React.FC = () => {
   const handleDelete = async () => {
     if (computer) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Computers/Eliminar/${computer.serialNumber}`, {
+        const response = await fetch(`https://localhost:7283/api/Cpus/Eliminar/${computer.serialNumber}`, {
           method: 'DELETE',
         });
 

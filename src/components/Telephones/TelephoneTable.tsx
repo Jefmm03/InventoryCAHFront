@@ -4,20 +4,21 @@ import { MdEdit, MdDelete } from "react-icons/md";
 import { BiSolidDetail } from "react-icons/bi";
 import ConfirmationModal from '../ConfirmationModal';
 
-type DockingData = {
+type TelephoneData = {
   id: number;
-  serialNumber: string;
-  user: string;
-  key: string;
+  serie: string;
+  activo: string;
+  ext: number;
+  employee: string;
 };
 
-const DockingTable: React.FC = () => {
-  const [data, setData] = useState<DockingData[]>([]);
+const TelephoneTable: React.FC = () => {
+  const [data, setData] = useState<TelephoneData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [dockingToDelete, setDockingToDelete] = useState<DockingData | null>(null);
+  const [telephoneToDelete, setTelephoneToDelete] = useState<TelephoneData | null>(null);
 
   const itemsPerPage = 10;
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const DockingTable: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:7283/api/Dockings/Lista');
+        const response = await fetch('https://localhost:7283/api/Telephones/Lista');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -46,31 +47,31 @@ const DockingTable: React.FC = () => {
   }, []);
 
   const handleDetailClick = (id: number) => {
-    navigate('/dockingDetail', { state: { dockingId: id } });
+    navigate('/telephoneDetail', { state: { telephoneId: id } });
   };
 
-  const openDeleteConfirmation = (docking: DockingData) => {
-    setDockingToDelete(docking);
+  const openDeleteConfirmation = (telephone: TelephoneData) => {
+    setTelephoneToDelete(telephone);
     setIsModalOpen(true);
   };
 
   const closeDeleteConfirmation = () => {
-    setDockingToDelete(null);
+    setTelephoneToDelete(null);
     setIsModalOpen(false);
   };
 
   const handleDeleteConfirm = async () => {
-    if (dockingToDelete) {
+    if (telephoneToDelete) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Dockings/Eliminar/${dockingToDelete.id}`, {
+        const response = await fetch(`https://localhost:7283/api/Telephones/Eliminar/${telephoneToDelete.id}`, {
           method: 'DELETE',
         });
 
         if (!response.ok) {
-          throw new Error('Failed to delete docking');
+          throw new Error('Failed to delete telephone');
         }
 
-        setData(prevData => prevData.filter(item => item.id !== dockingToDelete.id));
+        setData(prevData => prevData.filter(item => item.id !== telephoneToDelete.id));
         closeDeleteConfirmation();
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
@@ -97,7 +98,7 @@ const DockingTable: React.FC = () => {
     <div className="p-4">
       <div className="flex justify-between mb-4">
         <button
-          onClick={() => navigate('/dockingForm')}
+          onClick={() => navigate('/telephoneForm')}
           className="bg-red-500 text-white px-4 py-2 rounded"
         >
           + New
@@ -115,21 +116,23 @@ const DockingTable: React.FC = () => {
       <table className="w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-200">
-            <th className="border p-2">Serial Number</th>
-            <th className="border p-2">User</th>
-            <th className="border p-2">Key</th>
-            <th className="border p-2">Actions</th>
+            <th className="border p-2">Serie</th>
+            <th className="border p-2">Activo</th>
+            <th className="border p-2">Extension</th>
+            <th className="border p-2">Employee</th>
+            <th className="border p-2">Action</th>
           </tr>
         </thead>
         <tbody>
           {currentData.map((item, index) => (
             <tr key={index} className="border-t">
-              <td className="border p-2">{item.serialNumber}</td>
-              <td className="border p-2">{item.user}</td>
-              <td className="border p-2">{item.key}</td>
+              <td className="border p-2">{item.serie}</td>
+              <td className="border p-2">{item.activo}</td>
+              <td className="border p-2">{item.ext}</td>
+              <td className="border p-2">{item.employee}</td>
               <td className="border p-2">
                 <button
-                  onClick={() => navigate('/dockingForm', { state: { docking: item } })}
+                  onClick={() => navigate('/telephoneForm', { state: { telephone: item } })}
                   className="bg-blue-500 text-white px-2 py-1 rounded mr-2"
                 >
                   <MdEdit />
@@ -181,4 +184,4 @@ const DockingTable: React.FC = () => {
   );
 };
 
-export default DockingTable;
+export default TelephoneTable;

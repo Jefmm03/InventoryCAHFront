@@ -4,20 +4,23 @@ import { MdEdit, MdDelete } from "react-icons/md";
 import { BiSolidDetail } from "react-icons/bi";
 import ConfirmationModal from '../ConfirmationModal';
 
-type DockingData = {
+type RicohData = {
   id: number;
   serialNumber: string;
-  user: string;
-  key: string;
+  activoCr: string;
+  netName: string;
+  model: string;
+  link: string;
+  location: string;
 };
 
-const DockingTable: React.FC = () => {
-  const [data, setData] = useState<DockingData[]>([]);
+const RicohTable: React.FC = () => {
+  const [data, setData] = useState<RicohData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [dockingToDelete, setDockingToDelete] = useState<DockingData | null>(null);
+  const [ricohToDelete, setRicohToDelete] = useState<RicohData | null>(null);
 
   const itemsPerPage = 10;
   const navigate = useNavigate();
@@ -25,7 +28,7 @@ const DockingTable: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:7283/api/Dockings/Lista');
+        const response = await fetch('https://localhost:7283/api/Ricohs/Lista');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -46,31 +49,31 @@ const DockingTable: React.FC = () => {
   }, []);
 
   const handleDetailClick = (id: number) => {
-    navigate('/dockingDetail', { state: { dockingId: id } });
+    navigate('/ricohDetail', { state: { ricohId: id } });
   };
 
-  const openDeleteConfirmation = (docking: DockingData) => {
-    setDockingToDelete(docking);
+  const openDeleteConfirmation = (ricoh: RicohData) => {
+    setRicohToDelete(ricoh);
     setIsModalOpen(true);
   };
 
   const closeDeleteConfirmation = () => {
-    setDockingToDelete(null);
+    setRicohToDelete(null);
     setIsModalOpen(false);
   };
 
   const handleDeleteConfirm = async () => {
-    if (dockingToDelete) {
+    if (ricohToDelete) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Dockings/Eliminar/${dockingToDelete.id}`, {
+        const response = await fetch(`https://localhost:7283/api/Ricohs/Eliminar/${ricohToDelete.id}`, {
           method: 'DELETE',
         });
 
         if (!response.ok) {
-          throw new Error('Failed to delete docking');
+          throw new Error('Failed to delete ricoh');
         }
 
-        setData(prevData => prevData.filter(item => item.id !== dockingToDelete.id));
+        setData(prevData => prevData.filter(item => item.id !== ricohToDelete.id));
         closeDeleteConfirmation();
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
@@ -97,7 +100,7 @@ const DockingTable: React.FC = () => {
     <div className="p-4">
       <div className="flex justify-between mb-4">
         <button
-          onClick={() => navigate('/dockingForm')}
+          onClick={() => navigate('/ricohForm')}
           className="bg-red-500 text-white px-4 py-2 rounded"
         >
           + New
@@ -116,20 +119,26 @@ const DockingTable: React.FC = () => {
         <thead>
           <tr className="bg-gray-200">
             <th className="border p-2">Serial Number</th>
-            <th className="border p-2">User</th>
-            <th className="border p-2">Key</th>
-            <th className="border p-2">Actions</th>
+            <th className="border p-2">Activo CR</th>
+            <th className="border p-2">Net Name</th>
+            <th className="border p-2">Model</th>
+            <th className="border p-2">Link</th>
+            <th className="border p-2">Location</th>
+            <th className="border p-2">Action</th>
           </tr>
         </thead>
         <tbody>
           {currentData.map((item, index) => (
             <tr key={index} className="border-t">
               <td className="border p-2">{item.serialNumber}</td>
-              <td className="border p-2">{item.user}</td>
-              <td className="border p-2">{item.key}</td>
+              <td className="border p-2">{item.activoCr}</td>
+              <td className="border p-2">{item.netName}</td>
+              <td className="border p-2">{item.model}</td>
+              <td className="border p-2">{item.link}</td>
+              <td className="border p-2">{item.location}</td>
               <td className="border p-2">
                 <button
-                  onClick={() => navigate('/dockingForm', { state: { docking: item } })}
+                  onClick={() => navigate('/ricohForm', { state: { ricoh: item } })}
                   className="bg-blue-500 text-white px-2 py-1 rounded mr-2"
                 >
                   <MdEdit />
@@ -181,4 +190,4 @@ const DockingTable: React.FC = () => {
   );
 };
 
-export default DockingTable;
+export default RicohTable;

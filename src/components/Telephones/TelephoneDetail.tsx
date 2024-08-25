@@ -1,32 +1,34 @@
+
 import React, { useEffect, useState } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
 
-type DockingDetailData = {
-  serialNumber: string;
-  user: string;
-  key: string;
-  modifiedBy: string;
+type TelephoneDetailData = {
+  serie: string;
+  activo: string;
+  ext: number;
+  employee: string;
   comment: string;
   createdAt: string;
   updatedAt: string;
+  modifiedBy: string;
 };
 
-const DockingDetail: React.FC = () => {
+const TelephoneDetail: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [docking, setDocking] = useState<DockingDetailData | null>(null);
+  const [telephone, setTelephone] = useState<TelephoneDetailData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (location.state && location.state.dockingId) {
-        console.log("Fetching docking data for dockingId:", location.state.dockingId);
+      if (location.state && location.state.telephoneId) {
+        console.log("Fetching telephone data for telephoneId:", location.state.telephoneId);
         try {
-          const response = await fetch(`https://localhost:7283/api/Dockings/Obtener/${location.state.dockingId}`);
+          const response = await fetch(`https://localhost:7283/api/Telephones/Obtener/${location.state.telephoneId}`);
 
           if (!response.ok) {
-            throw new Error(`Failed to fetch docking data: ${response.statusText}`);
+            throw new Error(`Failed to fetch telephone data: ${response.statusText}`);
           }
 
           const text = await response.text();
@@ -36,19 +38,19 @@ const DockingDetail: React.FC = () => {
           console.log("Parsed JSON result:", result);
 
           if (result && typeof result === 'object') {
-            setDocking(result);
+            setTelephone(result);
           } else {
-            throw new Error('Invalid docking data');
+            throw new Error('Invalid telephone data');
           }
         } catch (error) {
-          console.error("Error fetching docking data:", error);
+          console.error("Error fetching telephone data:", error);
           setError(error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
           setLoading(false);
         }
       } else {
-        console.error("No docking ID provided");
-        setError('No docking ID provided');
+        console.error("No telephone ID provided");
+        setError('No telephone ID provided');
         setLoading(false);
       }
     };
@@ -57,17 +59,17 @@ const DockingDetail: React.FC = () => {
   }, [location.state]);
 
   const handleDelete = async () => {
-    if (docking) {
+    if (telephone) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Dockings/Eliminar/${docking.serialNumber}`, {
+        const response = await fetch(`https://localhost:7283/api/Telephones/Eliminar/${telephone.serie}`, {
           method: 'DELETE',
         });
 
         if (!response.ok) {
-          throw new Error('Failed to delete docking');
+          throw new Error('Failed to delete telephone');
         }
 
-        navigate('/dockings');
+        navigate('/');
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
       }
@@ -75,8 +77,8 @@ const DockingDetail: React.FC = () => {
   };
 
   const handleEdit = () => {
-    if (docking) {
-      navigate('/dockingForm', { state: { docking } });
+    if (telephone) {
+      navigate('/telephoneForm', { state: { telephone } });
     }
   };
 
@@ -93,7 +95,7 @@ const DockingDetail: React.FC = () => {
   }
 
   return (
-    docking && (
+    telephone && (
       <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-md">
         <div className="flex justify-between mb-6">
           <button onClick={handleReturn} className="bg-gray-500 text-white px-4 py-2 rounded">
@@ -112,32 +114,36 @@ const DockingDetail: React.FC = () => {
         <table className="table-auto w-full text-left">
           <tbody>
             <tr className="border-t">
-              <th className="px-4 py-2 text-gray-600">Serial Number:</th>
-              <td className="px-4 py-2">{docking.serialNumber}</td>
+              <th className="px-4 py-2 text-gray-600">Serie:</th>
+              <td className="px-4 py-2">{telephone.serie}</td>
             </tr>
             <tr className="border-t">
-              <th className="px-4 py-2 text-gray-600">User:</th>
-              <td className="px-4 py-2">{docking.user}</td>
+              <th className="px-4 py-2 text-gray-600">Activo:</th>
+              <td className="px-4 py-2">{telephone.activo}</td>
             </tr>
             <tr className="border-t">
-              <th className="px-4 py-2 text-gray-600">Key:</th>
-              <td className="px-4 py-2">{docking.key}</td>
+              <th className="px-4 py-2 text-gray-600">Extension:</th>
+              <td className="px-4 py-2">{telephone.ext}</td>
             </tr>
             <tr className="border-t">
-              <th className="px-4 py-2 text-gray-600">Modified By:</th>
-              <td className="px-4 py-2">{docking.modifiedBy}</td>
+              <th className="px-4 py-2 text-gray-600">Employee:</th>
+              <td className="px-4 py-2">{telephone.employee}</td>
             </tr>
             <tr className="border-t">
               <th className="px-4 py-2 text-gray-600">Comment:</th>
-              <td className="px-4 py-2">{docking.comment}</td>
+              <td className="px-4 py-2">{telephone.comment}</td>
             </tr>
             <tr className="border-t">
               <th className="px-4 py-2 text-gray-600">Creation Date:</th>
-              <td className="px-4 py-2">{docking.createdAt}</td>
+              <td className="px-4 py-2">{telephone.createdAt}</td>
             </tr>
             <tr className="border-t">
               <th className="px-4 py-2 text-gray-600">Modification Date:</th>
-              <td className="px-4 py-2">{docking.updatedAt}</td>
+              <td className="px-4 py-2">{telephone.updatedAt}</td>
+            </tr>
+            <tr className="border-t">
+              <th className="px-4 py-2 text-gray-600">Modified By:</th>
+              <td className="px-4 py-2">{telephone.modifiedBy}</td>
             </tr>
           </tbody>
         </table>
@@ -146,4 +152,4 @@ const DockingDetail: React.FC = () => {
   );
 };
 
-export default DockingDetail;
+export default TelephoneDetail;

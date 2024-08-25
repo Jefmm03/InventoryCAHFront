@@ -27,37 +27,37 @@ const Home: React.FC = () => {
         <Title
           icon="/public/plug-solid.svg"
           title="Dockings"
-          linkTo="/dockings"
+          linkTo="/dockingTable"
           backgroundColor="#c0c0c0"
         />
         <Title
           icon="/public/desktop-solid.svg"
           title="Monitors"
-          linkTo="/monitors"
+          linkTo="/monitorTable"
           backgroundColor="#ff0000"
         />
         <Title
           icon="/public/print-solid.svg"
           title="Ricoh"
-          linkTo="/ricohPrints"
+          linkTo="/ricohTable"
           backgroundColor="#c0c0c0"
         />
         <Title
           icon="/public/cloud-solid.svg"
           title="Static IPs"
-          linkTo="/staticIPs"
+          linkTo="/staticIPTable"
           backgroundColor="#ff0000"
         />
         <Title
           icon="/public/mobile-screen-button-solid.svg"
           title="Telephones"
-          linkTo="/telephones"
+          linkTo="/telephoneTable"
           backgroundColor="#c0c0c0"
         />
         <Title
           icon="/public/book-solid.svg"
           title="Codes"
-          linkTo="/codes"
+          linkTo="/telCodeTable"
           backgroundColor="#ff0000"
         />
         <Title

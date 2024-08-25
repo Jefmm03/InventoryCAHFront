@@ -2,22 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdEdit, MdDelete } from "react-icons/md";
 import { BiSolidDetail } from "react-icons/bi";
-import ConfirmationModal from '../ConfirmationModal';
+import ConfirmationModal from '../ConfirmationModal'; // Importa el modal de confirmación
 
-type DockingData = {
+type StaticIPData = {
   id: number;
-  serialNumber: string;
-  user: string;
-  key: string;
+  device: string;
+  area: string;
+  networkPoint: string;
+  switch: string;
+  ipaddress: string;
+  line: string;
+  location: string;
 };
 
-const DockingTable: React.FC = () => {
-  const [data, setData] = useState<DockingData[]>([]);
+const StaticIPTable: React.FC = () => {
+  const [data, setData] = useState<StaticIPData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [dockingToDelete, setDockingToDelete] = useState<DockingData | null>(null);
+  const [staticIPToDelete, setStaticIPToDelete] = useState<StaticIPData | null>(null);
 
   const itemsPerPage = 10;
   const navigate = useNavigate();
@@ -25,7 +29,7 @@ const DockingTable: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:7283/api/Dockings/Lista');
+        const response = await fetch('https://localhost:7283/api/StaticIps/Lista');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -46,31 +50,31 @@ const DockingTable: React.FC = () => {
   }, []);
 
   const handleDetailClick = (id: number) => {
-    navigate('/dockingDetail', { state: { dockingId: id } });
+    navigate('/staticIPDetail', { state: { staticIPId: id } });
   };
 
-  const openDeleteConfirmation = (docking: DockingData) => {
-    setDockingToDelete(docking);
+  const openDeleteConfirmation = (staticIP: StaticIPData) => {
+    setStaticIPToDelete(staticIP);
     setIsModalOpen(true);
   };
 
   const closeDeleteConfirmation = () => {
-    setDockingToDelete(null);
+    setStaticIPToDelete(null);
     setIsModalOpen(false);
   };
 
   const handleDeleteConfirm = async () => {
-    if (dockingToDelete) {
+    if (staticIPToDelete) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Dockings/Eliminar/${dockingToDelete.id}`, {
+        const response = await fetch(`https://localhost:7283/api/StaticIps/Eliminar/${staticIPToDelete.id}`, {
           method: 'DELETE',
         });
 
         if (!response.ok) {
-          throw new Error('Failed to delete docking');
+          throw new Error('Failed to delete Static IP');
         }
 
-        setData(prevData => prevData.filter(item => item.id !== dockingToDelete.id));
+        setData(prevData => prevData.filter(item => item.id !== staticIPToDelete.id));
         closeDeleteConfirmation();
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
@@ -97,7 +101,7 @@ const DockingTable: React.FC = () => {
     <div className="p-4">
       <div className="flex justify-between mb-4">
         <button
-          onClick={() => navigate('/dockingForm')}
+          onClick={() => navigate('/staticIPForm')}
           className="bg-red-500 text-white px-4 py-2 rounded"
         >
           + New
@@ -112,24 +116,33 @@ const DockingTable: React.FC = () => {
           />
         </div>
       </div>
+
       <table className="w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-200">
-            <th className="border p-2">Serial Number</th>
-            <th className="border p-2">User</th>
-            <th className="border p-2">Key</th>
-            <th className="border p-2">Actions</th>
+            <th className="border p-2">Device</th>
+            <th className="border p-2">Area</th>
+            <th className="border p-2">Network Point</th>
+            <th className="border p-2">Switch</th>
+            <th className="border p-2">IP Address</th>
+            <th className="border p-2">Line</th>
+            <th className="border p-2">Location</th>
+            <th className="border p-2">Action</th>
           </tr>
         </thead>
         <tbody>
           {currentData.map((item, index) => (
             <tr key={index} className="border-t">
-              <td className="border p-2">{item.serialNumber}</td>
-              <td className="border p-2">{item.user}</td>
-              <td className="border p-2">{item.key}</td>
+              <td className="border p-2">{item.device}</td>
+              <td className="border p-2">{item.area}</td>
+              <td className="border p-2">{item.networkPoint}</td>
+              <td className="border p-2">{item.switch}</td>
+              <td className="border p-2">{item.ipaddress}</td>
+              <td className="border p-2">{item.line}</td>
+              <td className="border p-2">{item.location}</td>
               <td className="border p-2">
                 <button
-                  onClick={() => navigate('/dockingForm', { state: { docking: item } })}
+                  onClick={() => navigate('/staticIPForm', { state: { staticIP: item } })}
                   className="bg-blue-500 text-white px-2 py-1 rounded mr-2"
                 >
                   <MdEdit />
@@ -151,6 +164,7 @@ const DockingTable: React.FC = () => {
           ))}
         </tbody>
       </table>
+
       <div className="flex justify-between mt-4">
         <select
           className="border px-4 py-2 rounded"
@@ -171,6 +185,7 @@ const DockingTable: React.FC = () => {
           ))}
         </div>
       </div>
+
       <ConfirmationModal
         isOpen={isModalOpen}
         onClose={closeDeleteConfirmation}
@@ -181,4 +196,4 @@ const DockingTable: React.FC = () => {
   );
 };
 
-export default DockingTable;
+export default StaticIPTable;

@@ -11,6 +11,24 @@ import CellPhoneDetail from './components/CellPhones/CellPhoneDetail';
 import ComputerTable from './components/Computers/ComputerTable';
 import ComputerForm from './components/Computers/ComputerForm';
 import ComputerDetail from './components/Computers/ComputerDetail';
+import DockingTable from './components/Dockings/DockingTable';
+import DockingForm from './components/Dockings/DockingForm';
+import DockingDetail from './components/Dockings/DockingDetail';
+import MonitorTable from './components/Monitors/MonitorTable';
+import MonitorForm from './components/Monitors/MonitorForm';
+import MonitorDetail from './components/Monitors/MonitorDetail';
+import RicohTable from './components/Ricohs/RicohTable';
+import RicohForm from './components/Ricohs/RicohForm';
+import RicohDetail from './components/Ricohs/RicohDetail';
+import StaticIPTable from './components/StaticIPs/StaticIPTable';
+import StaticIPForm from './components/StaticIPs/StaticIPForm';
+import StaticIPDetail from './components/StaticIPs/StaticIPDetail';
+import TelephoneTable from './components/Telephones/TelephoneTable';
+import TelephoneForm from './components/Telephones/TelephoneForm';
+import TelephoneDetail from './components/Telephones/TelephoneDetail';
+import TelCodeTable from './components/TeleCodes/TeleCodeTable';
+import TelCodeForm from './components/TeleCodes/TeleCodeForm';
+import TelCodeDetail from './components/TeleCodes/TeleCodeDetail';
 
 const App: React.FC = () => {
   return (
@@ -28,6 +46,24 @@ const App: React.FC = () => {
         <Route path="/computerTable" element={<ComputerTable />} />
         <Route path="/computerForm" element={<ComputerForm />} />
         <Route path="/computerDetail" element={<ComputerDetail />} />
+        <Route path="/dockingTable" element={<DockingTable />} />
+        <Route path="/dockingForm" element={<DockingForm />} />
+        <Route path="/dockingDetail" element={<DockingDetail />} />
+        <Route path="/monitorTable" element={<MonitorTable />} />
+        <Route path="/monitorForm" element={<MonitorForm />} />
+        <Route path="/monitorDetail" element={<MonitorDetail />} />
+        <Route path="/ricohTable" element={<RicohTable />} />
+        <Route path="/ricohForm" element={<RicohForm />} />
+        <Route path="/ricohDetail" element={<RicohDetail />} />
+        <Route path="/staticIPTable" element={<StaticIPTable />} />
+        <Route path="/staticIPForm" element={<StaticIPForm />} />
+        <Route path="/staticIPDetail" element={<StaticIPDetail />} />
+        <Route path="/telephoneTable" element={<TelephoneTable />} />
+        <Route path="/telephoneForm" element={<TelephoneForm />} />
+        <Route path="/telephoneDetail" element={<TelephoneDetail />} />
+        <Route path="/telCodeTable" element={<TelCodeTable />} />
+        <Route path="/telCodeForm" element={<TelCodeForm />} />
+        <Route path="/telCodeDetail" element={<TelCodeDetail />} />
       </Routes>
     </Router>
   );
