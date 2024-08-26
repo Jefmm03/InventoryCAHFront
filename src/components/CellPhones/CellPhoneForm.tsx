@@ -61,7 +61,7 @@ const CellphoneForm: React.FC = () => {
 
       navigate('/');
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', error); // resolver
       alert('Failed to save cellphone');
     }
   };

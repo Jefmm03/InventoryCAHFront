@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { MdEdit, MdDelete } from "react-icons/md";
 import { BiSolidDetail } from "react-icons/bi";
 import ConfirmationModal from '../ConfirmationModal';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+
 
 type DockingData = {
   id: number;
@@ -18,8 +21,9 @@ const DockingTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [dockingToDelete, setDockingToDelete] = useState<DockingData | null>(null);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10); // Estado para el número de elementos por página
+  const pagesToShow = 5; // Mostrar solo 5 botones de página a la vez
 
-  const itemsPerPage = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -82,6 +86,38 @@ const DockingTable: React.FC = () => {
     setCurrentPage(pageNumber);
   };
 
+  const handleItemsPerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setItemsPerPage(Number(event.target.value));
+    setCurrentPage(1); // Resetear a la primera página cada vez que cambia el número de elementos por página
+  };
+
+  const exportToExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Dockings');
+
+    
+    worksheet.columns = [
+      { header: 'Serial Number', key: 'serialNumber', width: 15 },
+      { header: 'User', key: 'user', width: 30 },
+      { header: 'Key', key: 'key', width: 15 },
+
+    ];
+
+    
+    currentData.forEach(docking => {
+      worksheet.addRow({
+        serialNumber: docking.serialNumber,
+        user: docking.user,
+        key: docking.key,
+
+      });
+    });
+
+  
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), 'Dockings.xlsx');
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -93,6 +129,23 @@ const DockingTable: React.FC = () => {
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const currentData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const getPageNumbers = () => {
+    const halfPagesToShow = Math.floor(pagesToShow / 2);
+    let startPage = Math.max(currentPage - halfPagesToShow, 1);
+    let endPage = startPage + pagesToShow - 1;
+
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = Math.max(endPage - pagesToShow + 1, 1);
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
   return (
     <div className="p-4">
       <div className="flex justify-between mb-4">
@@ -103,7 +156,7 @@ const DockingTable: React.FC = () => {
           + New
         </button>
         <div className="flex space-x-2">
-          <button className="bg-gray-500 text-white px-4 py-2 rounded">Export</button>
+          <button onClick={exportToExcel} className="bg-gray-500 text-white px-4 py-2 rounded">Export</button>
           <button className="bg-gray-500 text-white px-4 py-2 rounded">Show Deleted</button>
           <input
             type="text"
@@ -155,14 +208,15 @@ const DockingTable: React.FC = () => {
         <select
           className="border px-4 py-2 rounded"
           value={itemsPerPage}
-          disabled
+          onChange={handleItemsPerPageChange}
         >
           <option value="10">Items 10</option>
+          <option value="20">Items 20</option>
         </select>
-        <div className="flex space-x-2">
-          {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+        <div className="flex space-x-2">             
+          {getPageNumbers().map((pageNumber) => ( 
             <button
-              key={pageNumber}
+              key={pageNumber} // TODO EL DIV
               onClick={() => handlePageChange(pageNumber)}
               className={`px-3 py-2 rounded ${pageNumber === currentPage ? 'bg-red-500 text-white' : 'bg-gray-500 text-white'}`}
             >

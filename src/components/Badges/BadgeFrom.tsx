@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const BadgeForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const [number, setNumber] = useState<string>('');
   const [department, setDepartment] = useState<string>('');
   const [status, setStatus] = useState<string>('');
@@ -18,7 +18,7 @@ const BadgeForm: React.FC = () => {
       setDepartment(badge.department);
       setStatus(badge.status);
       setComment(badge.comment)
-      // Puedes establecer `comment` si tienes un valor inicial
+
     }
   }, [location.state]);
 
@@ -45,7 +45,7 @@ const BadgeForm: React.FC = () => {
         throw new Error('Failed to save badge');
       }
 
-      // Redirige al usuario a la lista de badges después de guardar
+
       navigate('/');
     } catch (error) {
       console.error('Error:', error);
@@ -100,31 +100,31 @@ const BadgeForm: React.FC = () => {
 
         <div>
           <label htmlFor="comment" className="block text-sm font-medium text-gray-700">
-Comment
-        </label>
-        <textarea
-          id="comment"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-        />
-      </div>
+            Comment
+          </label>
+          <textarea
+            id="comment"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          />
+        </div>
 
-      <div className="flex space-x-2">
-        <button type="submit" className="bg-red-500 text-white px-4 py-2 rounded">
-          Save
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate(-1)} // Navega hacia atrás
-          className="bg-gray-500 text-white px-4 py-2 rounded"
-        >
-          Return
-        </button>
-      </div>
-    </form>
-  </div>
-);
+        <div className="flex space-x-2">
+          <button type="submit" className="bg-red-500 text-white px-4 py-2 rounded">
+            Save
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(-1)} 
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+          >
+            Return
+          </button>
+        </div>
+      </form>
+    </div>
+  );
 };
 
 export default BadgeForm;

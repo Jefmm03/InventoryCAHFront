@@ -26,7 +26,6 @@ const CellPhoneDetail: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (location.state && location.state.cellphoneId) {
-        console.log("Fetching cellphone data for cellphoneId:", location.state.cellphoneId);
         try {
           const response = await fetch(`https://localhost:7283/api/CellPhones/Obtener/${location.state.cellphoneId}`);
          
@@ -35,10 +34,8 @@ const CellPhoneDetail: React.FC = () => {
           }
 
           const text = await response.text();
-          console.log("Raw response text:", text);
-
           const result = text ? JSON.parse(text) : null;
-          console.log("Parsed JSON result:", result);
+
 
           if (result && typeof result === 'object') {
             setCellphone(result);
@@ -46,13 +43,13 @@ const CellPhoneDetail: React.FC = () => {
             throw new Error('Invalid cellphone data');
           }
         } catch (error) {
-          console.error("Error fetching cellphone data:", error);
+
           setError(error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
           setLoading(false);
         }
       } else {
-        console.error("No cellphone ID provided");
+
         setError('No cellphone ID provided');
         setLoading(false);
       }

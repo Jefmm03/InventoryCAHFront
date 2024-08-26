@@ -4,9 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { MdEdit, MdDelete } from "react-icons/md";
 import { BiSolidDetail } from "react-icons/bi";
 import ConfirmationModal from '../ConfirmationModal';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 type BadgeData = {
-  id: number; 
+  id: number;
   number: string;
   department: string;
   status: string;
@@ -19,8 +21,8 @@ const BadgeTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [badgeToDelete, setBadgeToDelete] = useState<BadgeData | null>(null);
-
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10); // Estado para el número de elementos por página
+  const pagesToShow = 5; // Mostrar solo 5 botones de página a la vez
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,7 +49,6 @@ const BadgeTable: React.FC = () => {
   }, []);
 
   const handleDetailClick = (id: number) => {
-    
     navigate('/badgeDetail', { state: { badgeId: id } });
   };
 
@@ -72,10 +73,9 @@ const BadgeTable: React.FC = () => {
           throw new Error('Failed to delete badge');
         }
 
-        // Eliminar el badge de la lista en el estado
         setData(prevData => prevData.filter(item => item.id !== badgeToDelete.id));
 
-        closeDeleteConfirmation(); // Cierra el modal después de la eliminación
+        closeDeleteConfirmation();
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
       }
@@ -86,6 +86,36 @@ const BadgeTable: React.FC = () => {
     setCurrentPage(pageNumber);
   };
 
+  //1111111111
+  const handleItemsPerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setItemsPerPage(Number(event.target.value));
+    setCurrentPage(1); // Resetear a la primera página cada vez que cambia el número de elementos por página
+  };
+
+  //111111111
+  const exportToExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Badges');
+
+    worksheet.columns = [
+      { header: 'Number', key: 'number', width: 15 },
+      { header: 'Department', key: 'department', width: 30 },
+      { header: 'Status', key: 'status', width: 15 },
+    ];
+
+    // Usar los datos paginados actuales para la exportación
+    currentData.forEach(badge => {
+      worksheet.addRow({
+        number: badge.number,
+        department: badge.department,
+        status: badge.status,
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), 'Badges.xlsx');
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -94,11 +124,26 @@ const BadgeTable: React.FC = () => {
     return <div>Error: {error}</div>;
   }
 
-  // Calcular el número total de páginas
   const totalPages = Math.ceil(data.length / itemsPerPage);
-
-  // Determinar qué elementos se deben mostrar en la página actual
   const currentData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  //2222222222222
+  const getPageNumbers = () => {
+    const halfPagesToShow = Math.floor(pagesToShow / 2);
+    let startPage = Math.max(currentPage - halfPagesToShow, 1);
+    let endPage = startPage + pagesToShow - 1;
+
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = Math.max(endPage - pagesToShow + 1, 1);
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   return (
     <div className="p-4">
@@ -110,7 +155,7 @@ const BadgeTable: React.FC = () => {
           + New
         </button>
         <div className="flex space-x-2">
-          <button className="bg-gray-500 text-white px-4 py-2 rounded">Export</button>
+          <button onClick={exportToExcel} className="bg-gray-500 text-white px-4 py-2 rounded">Export</button>
           <button className="bg-gray-500 text-white px-4 py-2 rounded">Show Deleted</button>
           <input
             type="text"
@@ -119,6 +164,7 @@ const BadgeTable: React.FC = () => {
           />
         </div>
       </div>
+
       <table className="w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-200">
@@ -164,18 +210,20 @@ const BadgeTable: React.FC = () => {
           ))}
         </tbody>
       </table>
+
       <div className="flex justify-between mt-4">
         <select
           className="border px-4 py-2 rounded"
           value={itemsPerPage}
-          disabled
+          onChange={handleItemsPerPageChange} // Maneja el cambio de número de elementos por página
         >
           <option value="10">Items 10</option>
+          <option value="20">Items 20</option>  
         </select>
-        <div className="flex space-x-2">
-          {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+        <div className="flex space-x-2">             
+          {getPageNumbers().map((pageNumber) => ( 
             <button
-              key={pageNumber}
+              key={pageNumber} // TODO EL DIV
               onClick={() => handlePageChange(pageNumber)}
               className={`px-3 py-2 rounded ${pageNumber === currentPage ? 'bg-red-500 text-white' : 'bg-gray-500 text-white'}`}
             >
@@ -184,6 +232,7 @@ const BadgeTable: React.FC = () => {
           ))}
         </div>
       </div>
+
       <ConfirmationModal
         isOpen={isModalOpen}
         onClose={closeDeleteConfirmation}
