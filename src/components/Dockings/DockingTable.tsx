@@ -5,6 +5,7 @@ import { BiSolidDetail } from "react-icons/bi";
 import ConfirmationModal from '../ConfirmationModal';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { FaDownload } from 'react-icons/fa';
 
 
 type DockingData = {
@@ -21,8 +22,9 @@ const DockingTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [dockingToDelete, setDockingToDelete] = useState<DockingData | null>(null);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(10); // Estado para el número de elementos por página
-  const pagesToShow = 5; // Mostrar solo 5 botones de página a la vez
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10); 
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const pagesToShow = 5; 
 
   const navigate = useNavigate();
 
@@ -48,6 +50,11 @@ const DockingTable: React.FC = () => {
 
     fetchData();
   }, []);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value); // Actualizar el término de búsqueda
+    setCurrentPage(1); // Reiniciar la página actual a la primera página
+  };
 
   const handleDetailClick = (id: number) => {
     navigate('/dockingDetail', { state: { dockingId: id } });
@@ -88,7 +95,7 @@ const DockingTable: React.FC = () => {
 
   const handleItemsPerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setItemsPerPage(Number(event.target.value));
-    setCurrentPage(1); // Resetear a la primera página cada vez que cambia el número de elementos por página
+    setCurrentPage(1); 
   };
 
   const exportToExcel = async () => {
@@ -126,8 +133,12 @@ const DockingTable: React.FC = () => {
     return <div>Error: {error}</div>;
   }
 
+  const filteredData = data.filter(item =>
+    item.user && item.user.toLowerCase().includes(searchTerm.toLowerCase()) //1111111111
+  );
+
   const totalPages = Math.ceil(data.length / itemsPerPage);
-  const currentData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const currentData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const getPageNumbers = () => {
     const halfPagesToShow = Math.floor(pagesToShow / 2);
@@ -147,24 +158,45 @@ const DockingTable: React.FC = () => {
   };
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between mb-4">
-        <button
-          onClick={() => navigate('/dockingForm')}
-          className="bg-red-500 text-white px-4 py-2 rounded"
-        >
-          + New
-        </button>
-        <div className="flex space-x-2">
-          <button onClick={exportToExcel} className="bg-gray-500 text-white px-4 py-2 rounded">Export</button>
-          <button className="bg-gray-500 text-white px-4 py-2 rounded">Show Deleted</button>
-          <input
-            type="text"
-            placeholder="Search"
-            className="border px-4 py-2 rounded"
-          />
-        </div>
-      </div>
+    <div className="p-4 min-h-screen">
+<div className="flex flex-col sm:flex-row justify-between mb-4 items-center">
+
+{/* Contenedor de botones a la izquierda */}
+<div className="flex space-x-2 mb-4 sm:mb-0">
+  <button
+    onClick={() => navigate('/badgeForm')}
+    className="bg-blue-500 text-white px-4 py-2 rounded"
+  >
+    + New
+  </button>
+
+  <button
+    onClick={exportToExcel}
+    className="bg-green-500 text-white px-4 py-2 rounded flex items-center"
+  >
+    <FaDownload />
+    <span className="ml-2">Export</span>
+  </button>
+
+  <button className="bg-red-600 text-white px-4 py-2 rounded flex items-center">
+    <MdDelete />
+    <span className="ml-2">Show Deleted</span>
+  </button>
+</div>
+
+<div className="flex items-center font-semibold">
+  <input
+    type="text"
+    placeholder="Search"
+    className="border px-2 py-2 w-80 rounded-l"
+    onChange={handleSearchChange}
+    value={searchTerm}
+  />
+</div>
+</div>
+
+
+
       <table className="w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-200">
@@ -216,7 +248,7 @@ const DockingTable: React.FC = () => {
         <div className="flex space-x-2">             
           {getPageNumbers().map((pageNumber) => ( 
             <button
-              key={pageNumber} // TODO EL DIV
+              key={pageNumber} 
               onClick={() => handlePageChange(pageNumber)}
               className={`px-3 py-2 rounded ${pageNumber === currentPage ? 'bg-red-500 text-white' : 'bg-gray-500 text-white'}`}
             >

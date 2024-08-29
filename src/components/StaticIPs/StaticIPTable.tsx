@@ -1,8 +1,12 @@
-import React, { useEffect, useState } from 'react'; 
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdEdit, MdDelete } from "react-icons/md";
 import { BiSolidDetail } from "react-icons/bi";
-import ConfirmationModal from '../ConfirmationModal'; // Importa el modal de confirmación
+import ConfirmationModal from '../ConfirmationModal';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { FaDownload } from 'react-icons/fa';
+
 
 type StaticIPData = {
   id: number;
@@ -22,8 +26,10 @@ const StaticIPTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [staticIPToDelete, setStaticIPToDelete] = useState<StaticIPData | null>(null);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const pagesToShow = 5;
 
-  const itemsPerPage = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,6 +54,11 @@ const StaticIPTable: React.FC = () => {
 
     fetchData();
   }, []);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value); // Actualizar el término de búsqueda
+    setCurrentPage(1); // Reiniciar la página actual a la primera página
+  };
 
   const handleDetailClick = (id: number) => {
     navigate('/staticIPDetail', { state: { staticIPId: id } });
@@ -86,6 +97,45 @@ const StaticIPTable: React.FC = () => {
     setCurrentPage(pageNumber);
   };
 
+  const handleItemsPerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setItemsPerPage(Number(event.target.value));
+    setCurrentPage(1);
+  };
+
+
+  const exportToExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('StaticIPs');
+
+    worksheet.columns = [
+      { header: 'Device', key: 'device', width: 15 },
+      { header: 'Area', key: 'area', width: 30 },
+      { header: 'Network Point', key: 'networkPoint', width: 15 },
+      { header: 'Switch', key: 'switch', width: 15 },
+      { header: 'IP Address', key: 'ipaddress', width: 30 },
+      { header: 'Line', key: 'line', width: 15 },
+      { header: 'Location', key: 'location', width: 15 }
+    ];
+
+
+    currentData.forEach(staticIP => {
+      worksheet.addRow({
+        device: staticIP.device,
+        area: staticIP.area,
+        networkPoint: staticIP.networkPoint,
+        switch: staticIP.switch,
+        ipaddress: staticIP.ipaddress,
+        line: staticIP.line,
+        location: staticIP.location
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), 'StaticIPs.xlsx');
+  };
+
+
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -94,25 +144,64 @@ const StaticIPTable: React.FC = () => {
     return <div>Error: {error}</div>;
   }
 
+  const filteredData = data.filter(item =>
+    item.area && item.area.toLowerCase().includes(searchTerm.toLowerCase()) //1111111111
+  );
+
   const totalPages = Math.ceil(data.length / itemsPerPage);
-  const currentData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const currentData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const getPageNumbers = () => {
+    const halfPagesToShow = Math.floor(pagesToShow / 2);
+    let startPage = Math.max(currentPage - halfPagesToShow, 1);
+    let endPage = startPage + pagesToShow - 1;
+
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = Math.max(endPage - pagesToShow + 1, 1);
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between mb-4">
-        <button
-          onClick={() => navigate('/staticIPForm')}
-          className="bg-red-500 text-white px-4 py-2 rounded"
-        >
-          + New
-        </button>
-        <div className="flex space-x-2">
-          <button className="bg-gray-500 text-white px-4 py-2 rounded">Export</button>
-          <button className="bg-gray-500 text-white px-4 py-2 rounded">Show Deleted</button>
+    <div className="p-4 min-h-screen">
+      <div className="flex flex-col sm:flex-row justify-between mb-4 items-center">
+
+       
+        <div className="flex space-x-2 mb-4 sm:mb-0">
+          <button
+            onClick={() => navigate('/badgeForm')}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            + New
+          </button>
+
+          <button
+            onClick={exportToExcel}
+            className="bg-green-500 text-white px-4 py-2 rounded flex items-center"
+          >
+            <FaDownload />
+            <span className="ml-2">Export</span>
+          </button>
+
+          <button className="bg-red-600 text-white px-4 py-2 rounded flex items-center">
+            <MdDelete />
+            <span className="ml-2">Show Deleted</span>
+          </button>
+        </div>
+
+        <div className="flex items-center font-semibold">
           <input
             type="text"
             placeholder="Search"
-            className="border px-4 py-2 rounded"
+            className="border px-2 py-2 w-80 rounded-l"
+            onChange={handleSearchChange}
+            value={searchTerm}
           />
         </div>
       </div>
@@ -169,12 +258,13 @@ const StaticIPTable: React.FC = () => {
         <select
           className="border px-4 py-2 rounded"
           value={itemsPerPage}
-          disabled
+          onChange={handleItemsPerPageChange}
         >
           <option value="10">Items 10</option>
+          <option value="20">Items 20</option>
         </select>
         <div className="flex space-x-2">
-          {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+          {getPageNumbers().map((pageNumber) => (
             <button
               key={pageNumber}
               onClick={() => handlePageChange(pageNumber)}

@@ -1,11 +1,10 @@
-
 import React from 'react'; 
 import Title from '../components/Title';
 
 const Home: React.FC = () => {
   return (
-    <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 p-8">
+    <div className="min-h-screen flex justify-center items-center p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 justify-items-center -mt-24">
         <Title
           icon="/public/id-badge-solid.svg"
           title="Badges"
@@ -60,15 +59,11 @@ const Home: React.FC = () => {
           linkTo="/telCodeTable"
           backgroundColor="#ff0000"
         />
-        <Title
-          icon="/public/user-solid.svg"
-          title="Users"
-          linkTo="/Users"
-          backgroundColor="#c0c0c0"
-        />
       </div>
-    </>
+    </div>
   );
 };
 
-export default Home; 
+export default Home;
+
+
