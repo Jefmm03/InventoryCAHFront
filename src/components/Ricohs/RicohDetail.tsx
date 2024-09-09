@@ -1,19 +1,8 @@
 import React, { useEffect, useState } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { RicohDetailData } from '../../types/Index';
 
-type RicohDetailData = {
-  id: number;
-  serialNumber: string;
-  activoCr: string;
-  netName: string;
-  model: string;
-  link: string;
-  location: string;
-  comment: string;
-  createdAt: string;
-  updatedAt: string;
-  modifiedBy: string;
-};
 
 const RicohDetail: React.FC = () => {
   const location = useLocation();
@@ -27,17 +16,21 @@ const RicohDetail: React.FC = () => {
       if (location.state && location.state.ricohId) {
         console.log("Fetching ricoh data for ricohId:", location.state.ricohId);
         try {
-          const response = await fetch(`https://localhost:7283/api/Ricohs/Obtener/${location.state.ricohId}`);
+          const token = localStorage.getItem('token');
+          const response = await fetchWithAuth(`https://localhost:7283/api/Ricohs/Obtener/${location.state.ricohId}`,{
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` 
+            },
+          });
 
           if (!response.ok) {
             throw new Error(`Failed to fetch ricoh data: ${response.statusText}`);
           }
 
           const text = await response.text();
-          console.log("Raw response text:", text);
-
           const result = text ? JSON.parse(text) : null;
-          console.log("Parsed JSON result:", result);
 
           if (result && typeof result === 'object') {
             setRicoh(result);
@@ -45,13 +38,11 @@ const RicohDetail: React.FC = () => {
             throw new Error('Invalid ricoh data');
           }
         } catch (error) {
-          console.error("Error fetching ricoh data:", error);
           setError(error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
           setLoading(false);
         }
       } else {
-        console.error("No ricoh ID provided");
         setError('No ricoh ID provided');
         setLoading(false);
       }
@@ -63,15 +54,19 @@ const RicohDetail: React.FC = () => {
   const handleDelete = async () => {
     if (ricoh) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Ricohs/Eliminar/${ricoh.id}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/Ricohs/Eliminar/${ricoh.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          },
         });
 
         if (!response.ok) {
           throw new Error('Failed to delete ricoh');
         }
 
-        navigate('/');
+        navigate('/ricohTable');
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
       }

@@ -1,17 +1,8 @@
 import React, { useEffect, useState } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { TelCodeDetailData } from '../../types/Index';
 
-type TelCodeDetailData = {
-  id: number;
-  code: number;
-  cor: number;
-  callType: number;
-  asignation: string;
-  comment: string;
-  createdAt: string;
-  updatedAt: string;
-  modifiedBy: string;
-};
 
 const TelCodeDetail: React.FC = () => {
   const location = useLocation();
@@ -25,32 +16,34 @@ const TelCodeDetail: React.FC = () => {
       if (location.state && location.state.telCodeId) {
         console.log("Fetching tel code data for telCodeId:", location.state.telCodeId);
         try {
-          const response = await fetch(`https://localhost:7283/api/TelCodes/Obtener/${location.state.telCodeId}`);
-          
+          const token = localStorage.getItem('token');
+          const response = await fetchWithAuth(`https://localhost:7283/api/TelCodes/Obtener/${location.state.telCodeId}`,{
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` 
+            },
+          });
+
           if (!response.ok) {
-            throw new Error(`Failed to fetch tel code data: ${response.statusText}`);
+            throw new Error(`Failed to fetch telcode data: ${response.statusText}`);
           }
 
           const text = await response.text();
-          console.log("Raw response text:", text);
-
           const result = text ? JSON.parse(text) : null;
-          console.log("Parsed JSON result:", result);
 
           if (result && typeof result === 'object') {
             setTelCode(result);
           } else {
-            throw new Error('Invalid tel code data');
+            throw new Error('Invalid telcode data');
           }
         } catch (error) {
-          console.error("Error fetching tel code data:", error);
           setError(error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
           setLoading(false);
         }
       } else {
-        console.error("No tel code ID provided");
-        setError('No tel code ID provided');
+        setError('No telcode ID provided');
         setLoading(false);
       }
     };
@@ -61,8 +54,12 @@ const TelCodeDetail: React.FC = () => {
   const handleDelete = async () => {
     if (telCode) {
       try {
-        const response = await fetch(`https://localhost:7283/api/TelCodes/Eliminar/${telCode.id}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/TelCodes/Eliminar/${telCode.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          },
         });
 
         if (!response.ok) {

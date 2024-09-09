@@ -6,18 +6,10 @@ import ConfirmationModal from '../ConfirmationModal';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { FaDownload } from 'react-icons/fa';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { StaticIPData } from '../../types/Index';
 
 
-type StaticIPData = {
-  id: number;
-  device: string;
-  area: string;
-  networkPoint: string;
-  switch: string;
-  ipaddress: string;
-  line: string;
-  location: string;
-};
 
 const StaticIPTable: React.FC = () => {
   const [data, setData] = useState<StaticIPData[]>([]);
@@ -35,11 +27,20 @@ const StaticIPTable: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:7283/api/StaticIps/Lista');
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth('https://localhost:7283/api/StaticIps/Lista',{
+          method:'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          }
+        });
+
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
-        const result = await response.json();
+
+        const result = await response.json();  
         setData(result);
       } catch (error) {
         if (error instanceof Error) {
@@ -56,8 +57,8 @@ const StaticIPTable: React.FC = () => {
   }, []);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value); // Actualizar el término de búsqueda
-    setCurrentPage(1); // Reiniciar la página actual a la primera página
+    setSearchTerm(event.target.value); 
+    setCurrentPage(1); 
   };
 
   const handleDetailClick = (id: number) => {
@@ -77,8 +78,12 @@ const StaticIPTable: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (staticIPToDelete) {
       try {
-        const response = await fetch(`https://localhost:7283/api/StaticIps/Eliminar/${staticIPToDelete.id}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/StaticIps/Eliminar/${staticIPToDelete.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          }
         });
 
         if (!response.ok) {
@@ -145,7 +150,7 @@ const StaticIPTable: React.FC = () => {
   }
 
   const filteredData = data.filter(item =>
-    item.area && item.area.toLowerCase().includes(searchTerm.toLowerCase()) //1111111111
+    item.area && item.area.toLowerCase().includes(searchTerm.toLowerCase()) 
   );
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
@@ -175,7 +180,7 @@ const StaticIPTable: React.FC = () => {
        
         <div className="flex space-x-2 mb-4 sm:mb-0">
           <button
-            onClick={() => navigate('/badgeForm')}
+            onClick={() => navigate('/staticIPForm')}
             className="bg-blue-500 text-white px-4 py-2 rounded"
           >
             + New

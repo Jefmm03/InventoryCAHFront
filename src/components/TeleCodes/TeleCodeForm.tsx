@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import SuccessModal from '../SuccessModal';
 
 const TelCodeForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [id, setId] = useState<number | null>(null);
   const [code, setCode] = useState<number | ''>('');
   const [cor, setCor] = useState<number | ''>('');
   const [callType, setCallType] = useState<number | ''>('');
   const [asignation, setAsignation] = useState<string>('');
   const [comment, setComment] = useState<string>('');
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalMessage, setModalMessage] = useState<string>('');
 
   useEffect(() => {
     if (location.state && location.state.telCode) {
       const { telCode } = location.state;
+      setId(telCode.id)
       setCode(telCode.code);
       setCor(telCode.cor);
       setCallType(telCode.callType);
@@ -21,6 +26,11 @@ const TelCodeForm: React.FC = () => {
       setComment(telCode.comment);
     }
   }, [location.state]);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate('/telCodeTable'); 
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -34,22 +44,35 @@ const TelCodeForm: React.FC = () => {
     };
 
     try {
-      const response = await fetch('https://localhost:7283/api/TelCodes/Nuevo', {
-        method: 'POST',
+      const token = localStorage.getItem('token');
+
+     
+      const method = id ? 'PUT' : 'POST';
+      const url = id
+        ? `https://localhost:7283/api/TelCodes/Editar`
+        : `https://localhost:7283/api/TelCodes/Nuevo`;
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(newTelCode),
+        body: JSON.stringify(id ? { ...newTelCode, id } : newTelCode), 
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save tel code');
+        throw new Error('Failed to save telCode');
       }
 
-      navigate('/');
+      setModalMessage(id ? 'TelCode editado correctamente' : 'TelCode creado correctamente');
+      setShowModal(true);
+
+      setTimeout(handleCloseModal, 2000);
+
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to save tel code');
+      alert('Failed to save telCode');
     }
   };
 
@@ -139,6 +162,7 @@ const TelCodeForm: React.FC = () => {
           </button>
         </div>
       </form>
+      {showModal && <SuccessModal message={modalMessage} onClose={handleCloseModal} />}
     </div>
   );
 };

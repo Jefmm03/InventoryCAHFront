@@ -1,20 +1,26 @@
 import React, { useState, useEffect } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import SuccessModal from '../SuccessModal';
 
 const MonitorForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [id, setId] = useState<number | null>(null);
   const [serialNumber, setSerialNumber] = useState<string>('');
   const [activoCr, setActivoCr] = useState<string>('');
   const [model, setModel] = useState<string>('');
   const [user, setUser] = useState<string>('');
   const [size, setSize] = useState<number | ''>('');
   const [comment, setComment] = useState<string>('');
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalMessage, setModalMessage] = useState<string>('');
 
   useEffect(() => {
     if (location.state && location.state.monitor) {
       const { monitor } = location.state;
+      setId(monitor.id);
       setSerialNumber(monitor.serialNumber);
       setActivoCr(monitor.activoCr);
       setModel(monitor.model);
@@ -23,6 +29,11 @@ const MonitorForm: React.FC = () => {
       setComment(monitor.comment);
     }
   }, [location.state]);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate('/monitorTable'); 
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -37,19 +48,31 @@ const MonitorForm: React.FC = () => {
     };
 
     try {
-      const response = await fetch('https://localhost:7283/api/Monitors/Nuevo', {
-        method: 'POST',
+      const token = localStorage.getItem('token');
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id
+        ? `https://localhost:7283/api/Monitors/Editar`
+        : `https://localhost:7283/api/Monitors/Nuevo`;
+
+      const response = await fetchWithAuth(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(newMonitor),
+        body: JSON.stringify(id ? { ...newMonitor, id } : newMonitor), 
       });
 
       if (!response.ok) {
         throw new Error('Failed to save monitor');
       }
 
-      navigate('/');
+      setModalMessage(id ? 'Monitor editado correctamente' : 'Monitor creado correctamente');
+      setShowModal(true);
+
+      setTimeout(handleCloseModal, 2000);
+
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to save monitor');
@@ -153,6 +176,7 @@ const MonitorForm: React.FC = () => {
           </button>
         </div>
       </form>
+      {showModal && <SuccessModal message={modalMessage} onClose={handleCloseModal} />}
     </div>
   );
 };

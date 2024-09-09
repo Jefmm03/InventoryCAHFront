@@ -6,17 +6,10 @@ import ConfirmationModal from '../ConfirmationModal';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { FaDownload } from 'react-icons/fa';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { ComputerData } from '../../types/Index';
 
 
-type ComputerData = {
-  id: number;
-  serialNumber: string;
-  assetNcr: string;
-  model: string;
-  user: string;
-  computerName: string;
-
-};
 
 const ComputerTable: React.FC = () => {
   const [data, setData] = useState<ComputerData[]>([]);
@@ -33,11 +26,20 @@ const ComputerTable: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:7283/api/Cpus/Lista');
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth('https://localhost:7283/api/Cpus/Lista',{
+          method:'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          }
+        });
+
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
-        const result = await response.json();
+
+        const result = await response.json();  
         setData(result);
       } catch (error) {
         if (error instanceof Error) {
@@ -54,8 +56,8 @@ const ComputerTable: React.FC = () => {
   }, []);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value); // Actualizar el término de búsqueda
-    setCurrentPage(1); // Reiniciar la página actual a la primera página
+    setSearchTerm(event.target.value); 
+    setCurrentPage(1); 
   };
 
   const handleDetailClick = (id: number) => {
@@ -75,8 +77,12 @@ const ComputerTable: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (computerToDelete) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Cpus/Eliminar/${computerToDelete.id}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/Cpus/Eliminar/${computerToDelete.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          }
         });
 
         if (!response.ok) {
@@ -141,7 +147,7 @@ const ComputerTable: React.FC = () => {
   }
 
   const filteredData = data.filter(item =>
-    item.user && item.user.toLowerCase().includes(searchTerm.toLowerCase()) //1111111111
+    item.user && item.user.toLowerCase().includes(searchTerm.toLowerCase()) 
   );
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
@@ -166,13 +172,10 @@ const ComputerTable: React.FC = () => {
 
   return (
     <div className="p-3 min-h-screen">
-      {/* Contenedor de botones e input de búsqueda */}
       <div className="flex flex-col sm:flex-row justify-between mb-4 items-center">
-
-        {/* Contenedor de botones a la izquierda */}
         <div className="flex space-x-2 mb-4 sm:mb-0">
           <button
-            onClick={() => navigate('/badgeForm')}
+            onClick={() => navigate('/computerForm')}
             className="bg-blue-500 text-white px-4 py-2 rounded"
           >
             + New

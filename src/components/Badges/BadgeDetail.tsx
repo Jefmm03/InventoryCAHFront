@@ -1,16 +1,10 @@
 
 import React, { useEffect, useState } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { BadgeDetailData } from '../../types/Index';
 
-type BadgeDetailData = {
-  number: number;
-  department: string;
-  status: string;
-  comment: string;
-  createdAt: string;
-  updatedAt: string;
-  modifiedBy: string;
-};
+
 
 const BadgeDetail: React.FC = () => {
   const location = useLocation();
@@ -24,17 +18,23 @@ const BadgeDetail: React.FC = () => {
       if (location.state && location.state.badgeId) {
         console.log("Fetching badge data for badgeId:", location.state.badgeId);
         try {
-          const response = await fetch(`https://localhost:7283/api/Badges/Obtener/${location.state.badgeId}`);
-          
+          // Recupera el token JWT del localStorage
+          const token = localStorage.getItem('token');
+
+          const response = await fetchWithAuth(`https://localhost:7283/api/Badges/Obtener/${location.state.badgeId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` // Agrega el token JWT a los encabezados de autorización
+            },
+          });
+
           if (!response.ok) {
             throw new Error(`Failed to fetch badge data: ${response.statusText}`);
           }
 
           const text = await response.text();
-
-
           const result = text ? JSON.parse(text) : null;
-
 
           if (result && typeof result === 'object') {
             setBadge(result);
@@ -58,15 +58,22 @@ const BadgeDetail: React.FC = () => {
   const handleDelete = async () => {
     if (badge) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Badges/Eliminar/${badge.number}`, {
+        
+        const token = localStorage.getItem('token');
+
+        // Asegúrate de usar el 'id' del badge para la eliminación
+        const response = await fetchWithAuth(`https://localhost:7283/api/Badges/Eliminar/${badge.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          },
         });
 
         if (!response.ok) {
           throw new Error('Failed to delete badge');
         }
 
-        navigate('/');
+        navigate('/table');
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
       }
@@ -93,8 +100,8 @@ const BadgeDetail: React.FC = () => {
 
   return (
     badge && (
-      <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-md">
-        <div className="flex justify-between mb-6">
+      <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-md min-h-screen">
+        <div className="flex justify-between mb-2 ">
           <button onClick={handleReturn} className="bg-gray-500 text-white px-4 py-2 rounded">
             Return
           </button>
@@ -108,7 +115,7 @@ const BadgeDetail: React.FC = () => {
           </div>
         </div>
 
-        <table className="table-auto w-full text-left">
+        <table className="table-auto w-full text-left ">
           <tbody>
             <tr className="border-t">
               <th className="px-4 py-2 text-gray-600">Number:</th>
@@ -121,9 +128,7 @@ const BadgeDetail: React.FC = () => {
             <tr className="border-t">
               <th className="px-4 py-2 text-gray-600">Status:</th>
               <td className="px-4 py-2">
-                <span
-                  className={`px-2 py-1 rounded text-white ${badge.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}
-                >
+                <span className={`px-2 py-1 rounded text-white ${badge.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}>
                   {badge.status}
                 </span>
               </td>
@@ -151,5 +156,5 @@ const BadgeDetail: React.FC = () => {
   );
 };
 
-export default BadgeDetail; 
+export default BadgeDetail;
 

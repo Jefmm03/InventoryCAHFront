@@ -1,20 +1,8 @@
 import React, { useEffect, useState } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { StaticIPDetailData } from '../../types/Index';
 
-type StaticIPDetailData = {
-  id: number;
-  device: string;
-  area: string;
-  networkPoint: string;
-  switch: string;
-  ipaddress: string;
-  line: string;
-  location: string;
-  comment: string;
-  createdAt: string;
-  updatedAt: string;
-  modifiedBy: string;
-};
 
 const StaticIPDetail: React.FC = () => {
   const location = useLocation();
@@ -28,32 +16,34 @@ const StaticIPDetail: React.FC = () => {
       if (location.state && location.state.staticIPId) {
         console.log("Fetching Static IP data for staticIPId:", location.state.staticIPId);
         try {
-          const response = await fetch(`https://localhost:7283/api/StaticIPs/Obtener/${location.state.staticIPId}`);
-          
+          const token = localStorage.getItem('token');
+          const response = await fetchWithAuth(`https://localhost:7283/api/StaticIPs/Obtener/${location.state.staticIPId}`,{
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` 
+            },
+          });
+
           if (!response.ok) {
-            throw new Error(`Failed to fetch Static IP data: ${response.statusText}`);
+            throw new Error(`Failed to fetch staticIP data: ${response.statusText}`);
           }
 
           const text = await response.text();
-          console.log("Raw response text:", text);
-
           const result = text ? JSON.parse(text) : null;
-          console.log("Parsed JSON result:", result);
 
           if (result && typeof result === 'object') {
             setStaticIP(result);
           } else {
-            throw new Error('Invalid Static IP data');
+            throw new Error('Invalid staticIP data');
           }
         } catch (error) {
-          console.error("Error fetching Static IP data:", error);
           setError(error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
           setLoading(false);
         }
       } else {
-        console.error("No Static IP ID provided");
-        setError('No Static IP ID provided');
+        setError('No staticIP ID provided');
         setLoading(false);
       }
     };
@@ -64,15 +54,19 @@ const StaticIPDetail: React.FC = () => {
   const handleDelete = async () => {
     if (staticIP) {
       try {
-        const response = await fetch(`https://localhost:7283/api/StaticIPs/Eliminar/${staticIP.id}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/StaticIPs/Eliminar/${staticIP.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          },
         });
 
         if (!response.ok) {
           throw new Error('Failed to delete Static IP');
         }
 
-        navigate('/');
+        navigate('/staticIPTable');
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
       }

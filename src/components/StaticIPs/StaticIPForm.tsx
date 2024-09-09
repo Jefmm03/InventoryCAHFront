@@ -1,24 +1,29 @@
 import React, { useState, useEffect } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import SuccessModal from '../SuccessModal';
 
 const StaticIPForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Definimos los estados para cada campo del formulario
+  const [id, setId] = useState<number | null>(null);
   const [device, setDevice] = useState<string>('');
   const [area, setArea] = useState<string>('');
   const [networkPoint, setNetworkPoint] = useState<string>('');
-  const [switchField, setSwitchField] = useState<string>(''); // 'switch' es una palabra reservada en JS, renombramos a 'switchField'
+  const [switchField, setSwitchField] = useState<string>(''); 
   const [ipaddress, setIpaddress] = useState<string>('');
   const [line, setLine] = useState<string>('');
-  const [locationField, setLocationField] = useState<string>(''); // renombramos para evitar conflictos con useLocation
+  const [locationField, setLocationField] = useState<string>(''); 
   const [comment, setComment] = useState<string>('');
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalMessage, setModalMessage] = useState<string>('');
 
-  // Cargamos los datos existentes si estamos editando un registro existente
+
   useEffect(() => {
     if (location.state && location.state.staticIP) {
       const { staticIP } = location.state;
+      setId(staticIP.id)
       setDevice(staticIP.device);
       setArea(staticIP.area);
       setNetworkPoint(staticIP.networkPoint);
@@ -29,6 +34,11 @@ const StaticIPForm: React.FC = () => {
       setComment(staticIP.comment);
     }
   }, [location.state]);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate('/staticIPTable'); 
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -45,22 +55,34 @@ const StaticIPForm: React.FC = () => {
     };
 
     try {
-      const response = await fetch('https://localhost:7283/api/StaticIPs/Nuevo', {
-        method: 'POST',
+      const token = localStorage.getItem('token');
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id
+        ? `https://localhost:7283/api/StaticIps/Editar`
+        : `https://localhost:7283/api/StaticIps/Nuevo`;
+
+      const response = await fetchWithAuth(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(newStaticIP),
+        body: JSON.stringify(id ? { ...newStaticIP, id } : newStaticIP), 
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save Static IP');
+        throw new Error('Failed to save staticIP');
       }
 
-      navigate('/');
+      setModalMessage(id ? 'StaticIP editado correctamente' : 'StaticIP creado correctamente');
+      setShowModal(true);
+
+      setTimeout(handleCloseModal, 2000);
+
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to save Static IP');
+      alert('Failed to save staticIP');
     }
   };
 
@@ -191,6 +213,7 @@ const StaticIPForm: React.FC = () => {
           </button>
         </div>
       </form>
+      {showModal && <SuccessModal message={modalMessage} onClose={handleCloseModal} />}
     </div>
   );
 };

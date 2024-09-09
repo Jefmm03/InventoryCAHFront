@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import { MdEdit, MdDelete } from "react-icons/md";
 import { BiSolidDetail } from "react-icons/bi";
@@ -7,13 +7,9 @@ import { FaDownload } from "react-icons/fa";
 import ConfirmationModal from '../ConfirmationModal';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { BadgeData } from '../../types/Index';
 
-type BadgeData = {
-  id: number;
-  number: string;
-  department: string;
-  status: number;
-};
 
 const BadgeTable: React.FC = () => {
   const [data, setData] = useState<BadgeData[]>([]);
@@ -23,7 +19,7 @@ const BadgeTable: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [badgeToDelete, setBadgeToDelete] = useState<BadgeData | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
-  const [searchTerm, setSearchTerm] = useState<string>(''); // Nuevo estado para el término de búsqueda
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const pagesToShow = 5;
 
   const navigate = useNavigate();
@@ -31,11 +27,20 @@ const BadgeTable: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:7283/api/Badges/Lista');
-        if (!response.ok) {
+        const token = localStorage.getItem('token'); 
+        const response = await fetchWithAuth('https://localhost:7283/api/Badges/Lista', { 
+          method:'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          }
+        });
+
+        if (!response.ok) {  
           throw new Error('Network response was not ok');
         }
-        const result = await response.json();
+
+        const result = await response.json();  
         setData(result);
       } catch (error) {
         if (error instanceof Error) {
@@ -52,8 +57,8 @@ const BadgeTable: React.FC = () => {
   }, []);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value); // Actualizar el término de búsqueda
-    setCurrentPage(1); // Reiniciar la página actual a la primera página
+    setSearchTerm(event.target.value);
+    setCurrentPage(1);
   };
 
   const handleDetailClick = (id: number) => {
@@ -73,11 +78,15 @@ const BadgeTable: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (badgeToDelete) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Badges/Eliminar/${badgeToDelete.id}`, {
+        const token = localStorage.getItem('token'); 
+        const response = await fetchWithAuth(`https://localhost:7283/api/Badges/Eliminar/${badgeToDelete.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          }
         });
 
-        if (!response.ok) {
+        if (!response.ok) { 
           throw new Error('Failed to delete badge');
         }
 
@@ -129,10 +138,10 @@ const BadgeTable: React.FC = () => {
   }
 
   const filteredData = data.filter(item =>
-    item.department && item.department.toLowerCase().includes(searchTerm.toLowerCase()) //1111111111
+    item.department && item.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);  
   const currentData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const getPageNumbers = () => {
@@ -146,6 +155,7 @@ const BadgeTable: React.FC = () => {
     }
 
     const pages = [];
+
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
@@ -154,10 +164,7 @@ const BadgeTable: React.FC = () => {
 
   return (
     <div className="p-3 min-h-screen">
-      {/* Contenedor de botones e input de búsqueda */}
       <div className="flex flex-col sm:flex-row justify-between mb-4 items-center">
-
-        {/* Contenedor de botones a la izquierda */}
         <div className="flex space-x-2 mb-4 sm:mb-0">
           <button
             onClick={() => navigate('/badgeForm')}
@@ -190,8 +197,6 @@ const BadgeTable: React.FC = () => {
           />
         </div>
       </div>
-
-
 
       <table className="w-full border-collapse border border-gray-300">
         <thead>
@@ -254,8 +259,7 @@ const BadgeTable: React.FC = () => {
             <button
               key={pageNumber}
               onClick={() => handlePageChange(pageNumber)}
-              className={`px-3 py-2 rounded ${pageNumber === currentPage ? 'bg-red-500 text-white' : 'bg-gray-500 text-white'
-                }`}
+              className={`px-3 py-2 rounded ${pageNumber === currentPage ? 'bg-red-500 text-white' : 'bg-gray-500 text-white'}`}
             >
               {pageNumber}
             </button>
@@ -270,8 +274,10 @@ const BadgeTable: React.FC = () => {
         message="Do you really want to delete the selected item?"
       />
     </div>
-
   );
 };
 
 export default BadgeTable;
+
+
+

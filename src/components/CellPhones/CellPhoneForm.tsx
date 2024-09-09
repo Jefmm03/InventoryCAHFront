@@ -1,11 +1,14 @@
 
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import SuccessModal from '../SuccessModal';
 
 const CellphoneForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [id, setId] = useState<number | null>(null);
   const [model, setModel] = useState<string>('');
   const [number, setNumber] = useState<number | ''>('');
   const [imei, setImei] = useState<number | ''>('');
@@ -14,11 +17,14 @@ const CellphoneForm: React.FC = () => {
   const [puk, setPuk] = useState<number | ''>('');
   const [icloudUser, setIcloudUser] = useState<string>('');
   const [icloudPass, setIcloudPass] = useState<string>('');
-  const[comment, setComment] = useState <string>('')
+  const [comment, setComment] = useState<string>('')
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalMessage, setModalMessage] = useState<string>('');
 
   useEffect(() => {
     if (location.state && location.state.cellphone) {
       const { cellphone } = location.state;
+      setId(cellphone.id);
       setModel(cellphone.model);
       setNumber(cellphone.number)
       setImei(cellphone.imei);
@@ -30,6 +36,11 @@ const CellphoneForm: React.FC = () => {
       setComment(cellphone.comment)
     }
   }, [location.state]);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate('/cellPhoneTable'); 
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -47,31 +58,44 @@ const CellphoneForm: React.FC = () => {
     };
 
     try {
-      const response = await fetch('https://localhost:7283/api/CellPhones/Nuevo', {
-        method: 'POST',
+      const token = localStorage.getItem('token');
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id
+        ? 'https://localhost:7283/api/CellPhones/Editar'
+        : `https://localhost:7283/api/CellPhones/Nuevo`;
+      const response = await fetchWithAuth(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(newCellphone),
+        body: JSON.stringify(id ? { ...newCellphone, id } : newCellphone),
       });
 
       if (!response.ok) {
         throw new Error('Failed to save cellphone');
       }
 
-      navigate('/');
+
+      setModalMessage(id ? 'Cellphone editado correctamente' : 'Cellphone creado correctamente');
+      setShowModal(true);
+
+
+      setTimeout(handleCloseModal, 2000);
+
     } catch (error) {
-      console.error('Error:', error); // resolver
+      console.error('Error:', error);
       alert('Failed to save cellphone');
     }
   };
 
   return (
-    <div className="max-w-lg mx-auto p-4">
+    <div className="max-w-lg mx-auto p-4 min-h-screen">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="model" className="block text-sm font-medium text-gray-700">
-            Model 
+            Model
           </label>
           <input
             type="text"
@@ -85,13 +109,13 @@ const CellphoneForm: React.FC = () => {
 
         <div>
           <label htmlFor="number" className="block text-sm font-medium text-gray-700">
-            Number 
+            Number
           </label>
           <input
             type="number"
             id="number"
             value={number}
-            onChange={(e) => setImei(e.target.valueAsNumber)}
+            onChange={(e) => setNumber(e.target.valueAsNumber)}
             required
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
           />
@@ -99,10 +123,10 @@ const CellphoneForm: React.FC = () => {
 
         <div>
           <label htmlFor="imei" className="block text-sm font-medium text-gray-700">
-            IMEI 
+            IMEI
           </label>
           <input
-            type="number"
+            type="imei"
             id="imei"
             value={imei}
             onChange={(e) => setImei(e.target.valueAsNumber)}
@@ -178,7 +202,7 @@ const CellphoneForm: React.FC = () => {
 
         <div>
           <label htmlFor="comment" className="block text-sm font-medium text-gray-700">
-            Comentario 
+            Comentario
           </label>
           <input
             type="text"
@@ -203,6 +227,7 @@ const CellphoneForm: React.FC = () => {
           </button>
         </div>
       </form>
+      {showModal && <SuccessModal message={modalMessage} onClose={handleCloseModal} />}
     </div>
   );
 };

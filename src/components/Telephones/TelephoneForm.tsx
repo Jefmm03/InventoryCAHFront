@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import SuccessModal from '../SuccessModal';
 
 const TelephoneForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [id, setId] = useState<number | null>(null);
   const [serie, setSerie] = useState<string>('');
   const [activo, setActivo] = useState<string>('');
   const [ext, setExt] = useState<number | ''>('');
   const [employee, setEmployee] = useState<string>('');
   const [comment, setComment] = useState<string>('');
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalMessage, setModalMessage] = useState<string>('');
 
   useEffect(() => {
     if (location.state && location.state.telephone) {
       const { telephone } = location.state;
+      setId(telephone.id)
       setSerie(telephone.serie);
       setActivo(telephone.activo);
       setExt(telephone.ext);
@@ -21,6 +27,12 @@ const TelephoneForm: React.FC = () => {
       setComment(telephone.comment);
     }
   }, [location.state]);
+
+  
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate('/telephoneTable');
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -34,19 +46,31 @@ const TelephoneForm: React.FC = () => {
     };
 
     try {
-      const response = await fetch('https://localhost:7283/api/Telephones/Nuevo', {
-        method: 'POST',
+      const token = localStorage.getItem('token');
+
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id
+        ? `https://localhost:7283/api/Telephones/Editar`
+        : `https://localhost:7283/api/Telephones/Nuevo`;
+
+      const response = await fetchWithAuth(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(newTelephone),
+        body: JSON.stringify(id ? { ...newTelephone, id } : newTelephone), 
       });
 
       if (!response.ok) {
         throw new Error('Failed to save telephone');
       }
+      setModalMessage(id ? 'Telephone editado correctamente' : 'Telephone creado correctamente');
+      setShowModal(true);
 
-      navigate('/');
+      setTimeout(handleCloseModal, 2000);
+
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to save telephone');
@@ -137,6 +161,7 @@ const TelephoneForm: React.FC = () => {
           </button>
         </div>
       </form>
+      {showModal && <SuccessModal message={modalMessage} onClose={handleCloseModal} />}
     </div>
   );
 };

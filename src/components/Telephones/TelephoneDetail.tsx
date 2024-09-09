@@ -1,17 +1,9 @@
 
 import React, { useEffect, useState } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { TelephoneDetailData } from '../../types/Index';
 
-type TelephoneDetailData = {
-  serie: string;
-  activo: string;
-  ext: number;
-  employee: string;
-  comment: string;
-  createdAt: string;
-  updatedAt: string;
-  modifiedBy: string;
-};
 
 const TelephoneDetail: React.FC = () => {
   const location = useLocation();
@@ -25,17 +17,21 @@ const TelephoneDetail: React.FC = () => {
       if (location.state && location.state.telephoneId) {
         console.log("Fetching telephone data for telephoneId:", location.state.telephoneId);
         try {
-          const response = await fetch(`https://localhost:7283/api/Telephones/Obtener/${location.state.telephoneId}`);
+          const token = localStorage.getItem('token');
+          const response = await fetchWithAuth(`https://localhost:7283/api/Telephones/Obtener/${location.state.telephoneId}`,{
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` 
+            },
+          });
 
           if (!response.ok) {
             throw new Error(`Failed to fetch telephone data: ${response.statusText}`);
           }
 
           const text = await response.text();
-          console.log("Raw response text:", text);
-
           const result = text ? JSON.parse(text) : null;
-          console.log("Parsed JSON result:", result);
 
           if (result && typeof result === 'object') {
             setTelephone(result);
@@ -43,13 +39,11 @@ const TelephoneDetail: React.FC = () => {
             throw new Error('Invalid telephone data');
           }
         } catch (error) {
-          console.error("Error fetching telephone data:", error);
           setError(error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
           setLoading(false);
         }
       } else {
-        console.error("No telephone ID provided");
         setError('No telephone ID provided');
         setLoading(false);
       }
@@ -61,15 +55,19 @@ const TelephoneDetail: React.FC = () => {
   const handleDelete = async () => {
     if (telephone) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Telephones/Eliminar/${telephone.serie}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/Telephones/Eliminar/${telephone.serie}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          },
         });
 
         if (!response.ok) {
           throw new Error('Failed to delete telephone');
         }
 
-        navigate('/');
+        navigate('/telephoneTable');
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
       }

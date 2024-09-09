@@ -1,18 +1,21 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import SuccessModal from '../SuccessModal';
 
 const ComputerForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [id, setId] = useState<number | null>(null);
   const [serialNumber, setSerialNumber] = useState<string>('');
   const [assetNcr, setAssetNcr] = useState<string>('');
   const [model, setModel] = useState<string>('');
   const [user, setUser] = useState<string>('');
   const [department, setDepartment] = useState<string>('');
   const [status, setStatus] = useState<number | ''>('');
-  const [wireMac, setWireMac]= useState<string>('');
-  const [wirelessMac, setWirelessMac]= useState<string>('');
+  const [wireMac, setWireMac] = useState<string>('');
+  const [wirelessMac, setWirelessMac] = useState<string>('');
   const [memory, setMemory] = useState<number | ''>('');
   const [processor, setProcessor] = useState<string>('');
   const [processorSpeed, setProcessorSpeed] = useState<number | ''>('');
@@ -23,10 +26,13 @@ const ComputerForm: React.FC = () => {
   const [opticalDrive, setOpticalDrive] = useState<string>('');
   const [padLock, setPadLock] = useState<string>('');
   const [comment, setComment] = useState<string>('');
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalMessage, setModalMessage] = useState<string>('');
 
   useEffect(() => {
     if (location.state && location.state.computer) {
       const { computer } = location.state;
+      setId(computer.id);
       setSerialNumber(computer.serialNumber);
       setAssetNcr(computer.assetNcr);
       setModel(computer.model);
@@ -45,9 +51,14 @@ const ComputerForm: React.FC = () => {
       setOpticalDrive(computer.opticalDrive)
       setPadLock(computer.padLock)
       setComment(computer.comment)
-      
+
     }
   }, [location.state]);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate('/computerTable'); 
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -74,22 +85,35 @@ const ComputerForm: React.FC = () => {
     };
 
     try {
-      const response = await fetch('https://localhost:7283/api/Cpus/Nuevo', {
-        method: 'POST',
+      const token = localStorage.getItem('token');
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id
+        ? 'https://localhost:7283/api/Cpus/Editar'
+        : `https://localhost:7283/api/Cpus/Nuevo`;
+
+      const response = await fetchWithAuth(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(newComputer),
+        body: JSON.stringify(id ? { ...newComputer, id } : newComputer),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save cellphone');
+        throw new Error('Failed to save Computer');
       }
 
-      navigate('/');
+      setModalMessage(id ? 'Computadora editada correctamente' : 'Computadora creada correctamente');
+      setShowModal(true);
+
+
+      setTimeout(handleCloseModal, 2000);
+
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to save cellphone');
+      alert('Failed to save badge');
     }
   };
 
@@ -98,7 +122,7 @@ const ComputerForm: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="serialNumber" className="block text-sm font-medium text-gray-700">
-            Serial Number (S/N) 
+            Serial Number (S/N)
           </label>
           <input
             type="text"
@@ -162,7 +186,7 @@ const ComputerForm: React.FC = () => {
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
           />
         </div>
- 
+
         <div>
           <label htmlFor="status" className="block text-sm font-medium text-gray-700">
             Status
@@ -358,6 +382,7 @@ const ComputerForm: React.FC = () => {
           </button>
         </div>
       </form>
+      {showModal && <SuccessModal message={modalMessage} onClose={handleCloseModal} />}
     </div>
   );
 };

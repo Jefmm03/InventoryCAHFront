@@ -1,18 +1,8 @@
 import React, { useEffect, useState } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { MonitorDetailData } from '../../types/Index';
 
-type MonitorDetailData = {
-  id: number;
-  serialNumber: string;
-  activoCr: string;
-  model: string;
-  user: string;
-  size: number;
-  comment: string;
-  createdAt: string;
-  updatedAt: string;
-  modifiedBy: string;
-};
 
 const MonitorDetail: React.FC = () => {
   const location = useLocation();
@@ -26,17 +16,21 @@ const MonitorDetail: React.FC = () => {
       if (location.state && location.state.monitorId) {
         console.log("Fetching monitor data for monitorId:", location.state.monitorId);
         try {
-          const response = await fetch(`https://localhost:7283/api/Monitors/Obtener/${location.state.monitorId}`);
-          
+          const token = localStorage.getItem('token');
+          const response = await fetchWithAuth(`https://localhost:7283/api/Monitors/Obtener/${location.state.monitorId}`,{
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` 
+            },
+          });
+
           if (!response.ok) {
             throw new Error(`Failed to fetch monitor data: ${response.statusText}`);
           }
 
           const text = await response.text();
-          console.log("Raw response text:", text);
-
           const result = text ? JSON.parse(text) : null;
-          console.log("Parsed JSON result:", result);
 
           if (result && typeof result === 'object') {
             setMonitor(result);
@@ -44,13 +38,11 @@ const MonitorDetail: React.FC = () => {
             throw new Error('Invalid monitor data');
           }
         } catch (error) {
-          console.error("Error fetching monitor data:", error);
           setError(error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
           setLoading(false);
         }
       } else {
-        console.error("No monitor ID provided");
         setError('No monitor ID provided');
         setLoading(false);
       }
@@ -62,15 +54,19 @@ const MonitorDetail: React.FC = () => {
   const handleDelete = async () => {
     if (monitor) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Monitors/Eliminar/${monitor.id}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/Monitors/Eliminar/${monitor.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          },
         });
 
         if (!response.ok) {
           throw new Error('Failed to delete monitor');
         }
 
-        navigate('/');
+        navigate('/monitorTable');
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
       }

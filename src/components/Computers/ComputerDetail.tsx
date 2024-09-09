@@ -1,29 +1,8 @@
 import React, { useEffect, useState } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { ComputerDetailData } from '../../types/Index';
 
-type ComputerDetailData = {
-  serialNumber: string;
-  assetNcr: string;
-  model: string;
-  user: string;
-  department: string;
-  status: string;
-  wireMac: string;
-  wirelessMac: string;
-  memory: string;
-  processor: string;
-  processorSpeed: string;
-  hardDisk: string;
-  operatingSystem: string;
-  computerName: string;
-  domain: string;
-  opticalDrive: string;
-  padLock: string;
-  comment: string;
-  createdAt: string;
-  updatedAt: string;
-  modifiedBy: string;
-};
 
 const ComputerDetail: React.FC = () => {
   const location = useLocation();
@@ -37,17 +16,21 @@ const ComputerDetail: React.FC = () => {
       if (location.state && location.state.computerId) {
         console.log("Fetching computer data for computerId:", location.state.computerId);
         try {
-          const response = await fetch(`https://localhost:7283/api/Cpus/Obtener/${location.state.computerId}`);
-         
+          const token = localStorage.getItem('token');
+          const response = await fetchWithAuth(`https://localhost:7283/api/Cpus/Obtener/${location.state.computerId}`,{
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` 
+            },
+          });
+
           if (!response.ok) {
-            throw new Error(`Failed to fetch computer data: ${response.statusText}`);
+            throw new Error(`Failed to fetch computer: ${response.statusText}`);
           }
 
           const text = await response.text();
-          console.log("Raw response text:", text);
-
           const result = text ? JSON.parse(text) : null;
-          console.log("Parsed JSON result:", result);
 
           if (result && typeof result === 'object') {
             setComputer(result);
@@ -55,13 +38,11 @@ const ComputerDetail: React.FC = () => {
             throw new Error('Invalid computer data');
           }
         } catch (error) {
-          console.error("Error fetching computer data:", error);
           setError(error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
           setLoading(false);
         }
       } else {
-        console.error("No computer ID provided");
         setError('No computer ID provided');
         setLoading(false);
       }
@@ -73,15 +54,19 @@ const ComputerDetail: React.FC = () => {
   const handleDelete = async () => {
     if (computer) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Cpus/Eliminar/${computer.serialNumber}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/Cpus/Eliminar/${computer.serialNumber}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          },
         });
 
         if (!response.ok) {
           throw new Error('Failed to delete computer');
         }
 
-        navigate('/');
+        navigate('/computerTable');
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
       }

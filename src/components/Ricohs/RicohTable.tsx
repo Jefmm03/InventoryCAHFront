@@ -6,16 +6,9 @@ import ConfirmationModal from '../ConfirmationModal';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { FaDownload } from 'react-icons/fa';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { RicohData } from '../../types/Index';
 
-type RicohData = {
-  id: number;
-  serialNumber: string;
-  activoCr: string;
-  netName: string;
-  model: string;
-  link: string;
-  location: string;
-};
 
 const RicohTable: React.FC = () => {
   const [data, setData] = useState<RicohData[]>([]);
@@ -33,22 +26,31 @@ const RicohTable: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:7283/api/Ricohs/Lista');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth('https://localhost:7283/api/Ricohs/Lista', {
+        method:'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
         }
-        const result = await response.json();
-        setData(result);
-      } catch (error) {
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError('An unknown error occurred');
-        }
-      } finally {
-        setLoading(false);
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
-    };
+
+      const result = await response.json(); 
+      setData(result);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unknown error occurred');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
     fetchData();
   }, []);
@@ -75,8 +77,12 @@ const RicohTable: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (ricohToDelete) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Ricohs/Eliminar/${ricohToDelete.id}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/Ricohs/Eliminar/${ricohToDelete.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          }
         });
 
         if (!response.ok) {
@@ -139,7 +145,7 @@ const RicohTable: React.FC = () => {
   }
 
   const filteredData = data.filter(item =>
-    item.model && item.model.toLowerCase().includes(searchTerm.toLowerCase()) //1111111111
+    item.model && item.model.toLowerCase().includes(searchTerm.toLowerCase()) 
   );
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
@@ -166,10 +172,10 @@ const RicohTable: React.FC = () => {
     <div className="p-4 min-h-screen">
  <div className="flex flex-col sm:flex-row justify-between mb-4 items-center">
 
-{/* Contenedor de botones a la izquierda */}
+
 <div className="flex space-x-2 mb-4 sm:mb-0">
   <button
-    onClick={() => navigate('/badgeForm')}
+    onClick={() => navigate('/ricohForm')}
     className="bg-blue-500 text-white px-4 py-2 rounded"
   >
     + New

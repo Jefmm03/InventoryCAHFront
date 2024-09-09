@@ -6,14 +6,9 @@ import ConfirmationModal from '../ConfirmationModal';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { FaDownload } from 'react-icons/fa';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { DockingData } from '../../types/Index';
 
-
-type DockingData = {
-  id: number;
-  serialNumber: string;
-  user: string;
-  key: string;
-};
 
 const DockingTable: React.FC = () => {
   const [data, setData] = useState<DockingData[]>([]);
@@ -31,11 +26,20 @@ const DockingTable: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:7283/api/Dockings/Lista');
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth('https://localhost:7283/api/Dockings/Lista', {
+          method:'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          }
+        });
+
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
-        const result = await response.json();
+
+        const result = await response.json();  
         setData(result);
       } catch (error) {
         if (error instanceof Error) {
@@ -52,8 +56,8 @@ const DockingTable: React.FC = () => {
   }, []);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value); // Actualizar el término de búsqueda
-    setCurrentPage(1); // Reiniciar la página actual a la primera página
+    setSearchTerm(event.target.value); 
+    setCurrentPage(1); 
   };
 
   const handleDetailClick = (id: number) => {
@@ -73,8 +77,12 @@ const DockingTable: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (dockingToDelete) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Dockings/Eliminar/${dockingToDelete.id}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/Dockings/Eliminar/${dockingToDelete.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          }
         });
 
         if (!response.ok) {
@@ -134,7 +142,7 @@ const DockingTable: React.FC = () => {
   }
 
   const filteredData = data.filter(item =>
-    item.user && item.user.toLowerCase().includes(searchTerm.toLowerCase()) //1111111111
+    item.user && item.user.toLowerCase().includes(searchTerm.toLowerCase()) 
   );
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
@@ -161,10 +169,10 @@ const DockingTable: React.FC = () => {
     <div className="p-4 min-h-screen">
 <div className="flex flex-col sm:flex-row justify-between mb-4 items-center">
 
-{/* Contenedor de botones a la izquierda */}
+
 <div className="flex space-x-2 mb-4 sm:mb-0">
   <button
-    onClick={() => navigate('/badgeForm')}
+    onClick={() => navigate('/dockingForm')}
     className="bg-blue-500 text-white px-4 py-2 rounded"
   >
     + New

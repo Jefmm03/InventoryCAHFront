@@ -6,14 +6,10 @@ import ConfirmationModal from '../ConfirmationModal';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { FaDownload } from 'react-icons/fa';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { TelephoneData } from '../../types/Index';
 
-type TelephoneData = {
-  id: number;
-  serie: string;
-  activo: string;
-  ext: number;
-  employee: string;
-};
+
 
 const TelephoneTable: React.FC = () => {
   const [data, setData] = useState<TelephoneData[]>([]);
@@ -31,29 +27,38 @@ const TelephoneTable: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:7283/api/Telephones/Lista');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth('https://localhost:7283/api/Telephones/Lista',{
+        method:'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
         }
-        const result = await response.json();
-        setData(result);
-      } catch (error) {
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError('An unknown error occurred');
-        }
-      } finally {
-        setLoading(false);
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
-    };
+
+      const result = await response.json(); 
+      setData(result);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unknown error occurred');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
     fetchData();
   }, []);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value); // Actualizar el término de búsqueda
-    setCurrentPage(1); // Reiniciar la página actual a la primera página
+    setSearchTerm(event.target.value); 
+    setCurrentPage(1); 
   };
 
   const handleDetailClick = (id: number) => {
@@ -73,8 +78,12 @@ const TelephoneTable: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (telephoneToDelete) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Telephones/Eliminar/${telephoneToDelete.id}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/Telephones/Eliminar/${telephoneToDelete.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          }
         });
 
         if (!response.ok) {
@@ -132,7 +141,7 @@ const TelephoneTable: React.FC = () => {
   }
 
   const filteredData = data.filter(item =>
-    item.employee && item.employee.toLowerCase().includes(searchTerm.toLowerCase()) //1111111111
+    item.employee && item.employee.toLowerCase().includes(searchTerm.toLowerCase()) 
   );
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
@@ -162,7 +171,7 @@ const TelephoneTable: React.FC = () => {
       
         <div className="flex space-x-2 mb-4 sm:mb-0">
           <button
-            onClick={() => navigate('/badgeForm')}
+            onClick={() => navigate('/telephoneForm')}
             className="bg-blue-500 text-white px-4 py-2 rounded"
           >
             + New

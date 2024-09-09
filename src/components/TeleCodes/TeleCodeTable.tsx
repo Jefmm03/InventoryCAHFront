@@ -7,14 +7,10 @@ import ConfirmationModal from '../ConfirmationModal';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { FaDownload } from 'react-icons/fa';
+import { TelCodeData } from '../../types/Index';
 
-type TelCodeData = {
-  id: number;
-  code: number;
-  cor: number;
-  callType: number;
-  asignation: string;
-};
+
+
 
 const TeleCodeTable: React.FC = () => {
   const [data, setData] = useState<TelCodeData[]>([]);
@@ -32,22 +28,31 @@ const TeleCodeTable: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:7283/api/TelCodes/Lista');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
+        const token = localStorage.getItem('token');
+        const response = await fetch('https://localhost:7283/api/TelCodes/Lista',{
+        method:'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
         }
-        const result = await response.json();
-        setData(result);
-      } catch (error) {
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError('An unknown error occurred');
-        }
-      } finally {
-        setLoading(false);
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
-    };
+
+      const result = await response.json(); 
+      setData(result);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unknown error occurred');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
     fetchData();
   }, []);
@@ -74,8 +79,12 @@ const TeleCodeTable: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (telCodeToDelete) {
       try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`https://localhost:7283/api/TelCodes/Eliminar/${telCodeToDelete.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          }
         });
 
         if (!response.ok) {
@@ -132,7 +141,7 @@ const TeleCodeTable: React.FC = () => {
   }
 
   const filteredData = data.filter(item =>
-    item.asignation && item.asignation.toLowerCase().includes(searchTerm.toLowerCase()) //1111111111
+    item.asignation && item.asignation.toLowerCase().includes(searchTerm.toLowerCase()) 
   );
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
@@ -174,7 +183,7 @@ const TeleCodeTable: React.FC = () => {
 {/* Contenedor de botones a la izquierda */}
 <div className="flex space-x-2 mb-4 sm:mb-0">
   <button
-    onClick={() => navigate('/badgeForm')}
+    onClick={() => navigate('/telCodeForm')}
     className="bg-blue-500 text-white px-4 py-2 rounded"
   >
     + New

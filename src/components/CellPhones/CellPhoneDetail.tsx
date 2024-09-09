@@ -1,20 +1,9 @@
 import React, { useEffect, useState } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { CellphoneDetailData } from '../../types/Index';
 
-type CellphoneDetailData = {
-  model: string;
-  imei: number;
-  number: number;
-  user: string;
-  pin: number;
-  puk: number;
-  icloudUser: string;
-  icloudPass: string;
-  comment: string;
-  createdAt: string;
-  updatedAt: string;
-  modifiedBy: string;
-};
+
 
 const CellPhoneDetail: React.FC = () => {
   const location = useLocation();
@@ -27,8 +16,15 @@ const CellPhoneDetail: React.FC = () => {
     const fetchData = async () => {
       if (location.state && location.state.cellphoneId) {
         try {
-          const response = await fetch(`https://localhost:7283/api/CellPhones/Obtener/${location.state.cellphoneId}`);
-         
+          const token = localStorage.getItem('token');
+          const response = await fetchWithAuth(`https://localhost:7283/api/CellPhones/Obtener/${location.state.cellphoneId}`,{
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` 
+            },
+          });
+
           if (!response.ok) {
             throw new Error(`Failed to fetch cellphone data: ${response.statusText}`);
           }
@@ -36,20 +32,17 @@ const CellPhoneDetail: React.FC = () => {
           const text = await response.text();
           const result = text ? JSON.parse(text) : null;
 
-
           if (result && typeof result === 'object') {
             setCellphone(result);
           } else {
             throw new Error('Invalid cellphone data');
           }
         } catch (error) {
-
           setError(error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
           setLoading(false);
         }
       } else {
-
         setError('No cellphone ID provided');
         setLoading(false);
       }
@@ -61,15 +54,19 @@ const CellPhoneDetail: React.FC = () => {
   const handleDelete = async () => {
     if (cellphone) {
       try {
-        const response = await fetch(`https://localhost:7283/api/CellPhones/Eliminar/${cellphone.imei}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/CellPhones/Eliminar/${cellphone.imei}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
         });
 
         if (!response.ok) {
           throw new Error('Failed to delete cellphone');
         }
 
-        navigate('/');
+        navigate('/cellPhoneTable');
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
       }
@@ -96,7 +93,7 @@ const CellPhoneDetail: React.FC = () => {
 
   return (
     cellphone && (
-      <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-md">
+      <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-md min-h-screen">
         <div className="flex justify-between mb-6">
           <button onClick={handleReturn} className="bg-gray-500 text-white px-4 py-2 rounded">
             Return

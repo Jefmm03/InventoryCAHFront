@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import SuccessModal from '../SuccessModal';
 
 const RicohForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [id, setId] = useState<number | null>(null);
   const [serialNumber, setSerialNumber] = useState<string>('');
   const [activoCr, setActivoCr] = useState<string>('');
   const [netName, setNetName] = useState<string>('');
   const [model, setModel] = useState<string>('');
   const [link, setLink] = useState<string>('');
-  const [locationData, setLocationData] = useState<string>(''); // renamed to avoid conflict with 'location' from react-router-dom
+  const [locationData, setLocationData] = useState<string>('');
   const [comment, setComment] = useState<string>('');
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalMessage, setModalMessage] = useState<string>('');
 
   useEffect(() => {
     if (location.state && location.state.ricoh) {
       const { ricoh } = location.state;
+      setId(ricoh.id);
       setSerialNumber(ricoh.serialNumber);
       setActivoCr(ricoh.activoCr);
       setNetName(ricoh.netName);
@@ -25,6 +31,11 @@ const RicohForm: React.FC = () => {
       setComment(ricoh.comment);
     }
   }, [location.state]);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate('/ricohTable'); 
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -40,22 +51,35 @@ const RicohForm: React.FC = () => {
     };
 
     try {
-      const response = await fetch('https://localhost:7283/api/Ricohs/Nuevo', {
-        method: 'POST',
+      const token = localStorage.getItem('token');
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id
+        ? `https://localhost:7283/api/Ricohs/Editar`
+        : `https://localhost:7283/api/Ricohs/Nuevo`;
+
+      const response = await fetchWithAuth(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(newRicoh),
+        body: JSON.stringify(id ? { ...newRicoh, id } : newRicoh), 
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save ricoh data');
+        throw new Error('Failed to save ricoh');
       }
 
-      navigate('/');
+      setModalMessage(id ? 'Ricoh editado correctamente' : 'Ricoh creado correctamente');
+      setShowModal(true);
+
+      
+      setTimeout(handleCloseModal, 2000);
+
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to save ricoh data');
+      
     }
   };
 
@@ -169,6 +193,7 @@ const RicohForm: React.FC = () => {
           </button>
         </div>
       </form>
+      {showModal && <SuccessModal message={modalMessage} onClose={handleCloseModal} />}
     </div>
   );
 };

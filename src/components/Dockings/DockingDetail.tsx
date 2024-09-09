@@ -1,15 +1,7 @@
 import React, { useEffect, useState } from 'react'; 
 import { useLocation, useNavigate } from 'react-router-dom';
-
-type DockingDetailData = {
-  serialNumber: string;
-  user: string;
-  key: string;
-  modifiedBy: string;
-  comment: string;
-  createdAt: string;
-  updatedAt: string;
-};
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { DockingDetailData } from '../../types/Index';
 
 const DockingDetail: React.FC = () => {
   const location = useLocation();
@@ -23,17 +15,21 @@ const DockingDetail: React.FC = () => {
       if (location.state && location.state.dockingId) {
         console.log("Fetching docking data for dockingId:", location.state.dockingId);
         try {
-          const response = await fetch(`https://localhost:7283/api/Dockings/Obtener/${location.state.dockingId}`);
+          const token = localStorage.getItem('token');
+          const response = await fetchWithAuth(`https://localhost:7283/api/Dockings/Obtener/${location.state.dockingId}`,{
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` 
+            },
+          });
 
           if (!response.ok) {
             throw new Error(`Failed to fetch docking data: ${response.statusText}`);
           }
 
           const text = await response.text();
-          console.log("Raw response text:", text);
-
           const result = text ? JSON.parse(text) : null;
-          console.log("Parsed JSON result:", result);
 
           if (result && typeof result === 'object') {
             setDocking(result);
@@ -41,13 +37,11 @@ const DockingDetail: React.FC = () => {
             throw new Error('Invalid docking data');
           }
         } catch (error) {
-          console.error("Error fetching docking data:", error);
           setError(error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
           setLoading(false);
         }
       } else {
-        console.error("No docking ID provided");
         setError('No docking ID provided');
         setLoading(false);
       }
@@ -59,8 +53,12 @@ const DockingDetail: React.FC = () => {
   const handleDelete = async () => {
     if (docking) {
       try {
-        const response = await fetch(`https://localhost:7283/api/Dockings/Eliminar/${docking.serialNumber}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/Dockings/Eliminar/${docking.serialNumber}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
         });
 
         if (!response.ok) {

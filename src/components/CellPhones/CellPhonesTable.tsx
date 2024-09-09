@@ -7,19 +7,9 @@ import ConfirmationModal from '../ConfirmationModal';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { FaDownload } from 'react-icons/fa';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import { CellphoneData } from '../../types/Index';
 
-
-type CellphoneData = {
-  id: number;
-  model: string;
-  imei: number;
-  number: number
-  user: string;
-  pin: number;
-  puk: number;
-  icloudUser: string; 
-  icloudPass: string; 
-};
 
 const CellphonesTable: React.FC = () => {
   const [data, setData] = useState<CellphoneData[]>([]);
@@ -31,15 +21,25 @@ const CellphonesTable: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [searchTerm, setSearchTerm] = useState<string>(''); 
   const pagesToShow = 5; 
+
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:7283/api/CellPhones/Lista');
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth('https://localhost:7283/api/CellPhones/Lista',{
+          method:'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          }
+        });
+
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
+
         const result = await response.json();
         setData(result);
       } catch (error) {
@@ -78,8 +78,12 @@ const CellphonesTable: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (cellphoneToDelete) {
       try {
-        const response = await fetch(`https://localhost:7283/api/CellPhones/Eliminar/${cellphoneToDelete.id}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetchWithAuth(`https://localhost:7283/api/CellPhones/Eliminar/${cellphoneToDelete.id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          }
         });
 
         if (!response.ok) {
@@ -150,10 +154,10 @@ const CellphonesTable: React.FC = () => {
   }
 
   const filteredData = data.filter(item =>
-    item.user && item.user.toLowerCase().includes(searchTerm.toLowerCase()) //1111111111
+    item.user && item.user.toLowerCase().includes(searchTerm.toLowerCase()) 
   );
 
-  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const currentData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const getPageNumbers = () => {
@@ -178,11 +182,9 @@ const CellphonesTable: React.FC = () => {
     <div className="p-3 min-h-screen">
 
 <div className="flex flex-col sm:flex-row justify-between mb-4 items-center">
-    
-    {/* Contenedor de botones a la izquierda */}
     <div className="flex space-x-2 mb-4 sm:mb-0">
       <button
-        onClick={() => navigate('/badgeForm')}
+        onClick={() => navigate('/cellPhoneForm')}
         className="bg-blue-500 text-white px-4 py-2 rounded"
       >
         + New
@@ -270,8 +272,8 @@ const CellphonesTable: React.FC = () => {
           value={itemsPerPage}
           onChange={handleItemsPerPageChange}        
         >
-          <option value="10 ">Items 10</option>
-          <option value="20 ">Items 20</option>
+          <option value="10">Items 10</option>
+          <option value="20">Items 20</option>
         </select>
         <div className="flex space-x-2"> 
           {getPageNumbers().map((pageNumber) => ( 

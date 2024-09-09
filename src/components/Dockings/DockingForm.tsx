@@ -1,25 +1,36 @@
 
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../Utils/fetchWithAuth';
+import SuccessModal from '../SuccessModal';
 
 const DockingForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [id, setId] = useState<number | null>(null);
   const [serialNumber, setSerialNumber] = useState<string>('');
   const [user, setUser] = useState<string>('');
   const [key, setKey] = useState<string>('');
   const [comment, setComment] = useState<string>('');
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalMessage, setModalMessage] = useState<string>('');
 
   useEffect(() => {
     if (location.state && location.state.docking) {
       const { docking } = location.state;
+      setId(docking.id);
       setSerialNumber(docking.serialNumber);
       setUser(docking.user);
       setKey(docking.key);
       setComment(docking.comment);
     }
   }, [location.state]);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate('/dockingTable'); 
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -32,22 +43,35 @@ const DockingForm: React.FC = () => {
     };
 
     try {
-      const response = await fetch('https://localhost:7283/api/Dockings/Nuevo', {
-        method: 'POST',
+      const token = localStorage.getItem('token');
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id
+        ? `https://localhost:7283/api/Dockings/Editar`
+        : `https://localhost:7283/api/Dockings/Nuevo`;
+
+      const response = await fetchWithAuth(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(newDocking),
+        body: JSON.stringify(id ? { ...newDocking, id } : newDocking),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save docking');
+        throw new Error('Failed to save Docking');
       }
 
-      navigate('/dockings');
+      setModalMessage(id ? 'Docking editado correctamente' : 'Docking creado correctamente');
+      setShowModal(true);
+
+
+      setTimeout(handleCloseModal, 2000);
+
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to save docking');
+      alert('Failed to save Docking');
     }
   };
 
@@ -120,6 +144,7 @@ const DockingForm: React.FC = () => {
           </button>
         </div>
       </form>
+      {showModal && <SuccessModal message={modalMessage} onClose={handleCloseModal} />}
     </div>
   );
 };
